@@ -113,6 +113,6 @@ mysql -u root -p < schema.sql
 
 ## 👨‍💻 Equipo de Desarrollo
 
-- **Desarrollador 1:** [Nombre] - Frontend
-- **Desarrollador 2:** [Nombre] - Backend
-- **Desarrollador 3:** [Nombre] - Base de Datos / Full Stack
+- **Desarrollador 1:** Gael Guzmán - Frontend
+- **Desarrollador 2:** Rogelio Nava - Backend
+- **Desarrollador 3:** Antonio Annese - Base de Datos / Full Stack
