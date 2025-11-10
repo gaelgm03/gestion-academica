@@ -115,4 +115,4 @@ mysql -u root -p < schema.sql
 
 - **Desarrollador 1:** Gael Guzmán - Frontend
 - **Desarrollador 2:** Rogelio Nava - Backend
-- **Desarrollador 3:** Antonio Annese - Base de Datos / Full Stack
+- **Desarrollador 3:** Antonio Annese - Base de Datos
