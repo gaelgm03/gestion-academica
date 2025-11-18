@@ -1,0 +1,14 @@
+# Variables de entorno (NO subir credenciales)
+.env
+
+# Logs
+logs/
+*.log
+
+# Dependencias
+vendor/
+composer.lock
+
+# Cache
+cache/
+*.cache

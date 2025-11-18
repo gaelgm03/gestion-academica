@@ -191,7 +191,7 @@ Asegúrate de tener instalado:
 ### 1️⃣ Clonar el Repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/gestion-academica.git
+git clone https://github.com/gaelgm03/gestion-academica.git
 cd gestion-academica
 ```
 
