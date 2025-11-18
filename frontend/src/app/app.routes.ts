@@ -4,7 +4,7 @@ import { Docentes } from './docentes/docentes';
 import { Incidencias } from './incidencias/incidencias';
 import { Dashboard } from './dashboard/dashboard';
 
-const routes: Routes = [
+export const routes: Routes = [
   { path: 'docentes', component: Docentes },
   { path: 'incidencias', component: Incidencias },
   { path: 'dashboard', component: Dashboard },
