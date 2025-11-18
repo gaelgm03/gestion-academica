@@ -1,1 +1,171 @@
-<p>incidencias works!</p>
+<div class="incidencias-container">
+  <div class="header">
+    <h1>Gestión de Incidencias</h1>
+    <button class="btn-primary" (click)="openForm()">+ Nueva Incidencia</button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters">
+    <input 
+      type="text" 
+      placeholder="Buscar por tipo..." 
+      [(ngModel)]="filters.tipo"
+      (keyup.enter)="applyFilters()"
+      class="filter-input">
+    <select [(ngModel)]="filters.status" class="filter-select">
+      <option value="">Todos los estados</option>
+      <option value="abierto">Abierto</option>
+      <option value="en proceso">En Proceso</option>
+      <option value="cerrado">Cerrado</option>
+    </select>
+    <select [(ngModel)]="filters.prioridad" class="filter-select">
+      <option value="">Todas las prioridades</option>
+      <option value="Alta">Alta</option>
+      <option value="Media">Media</option>
+      <option value="Baja">Baja</option>
+    </select>
+    <button (click)="applyFilters()" class="btn-secondary">Filtrar</button>
+    <button (click)="clearFilters()" class="btn-secondary">Limpiar</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <p>Cargando incidencias...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+    <button (click)="loadIncidencias()">Reintentar</button>
+  </div>
+
+  <!-- Tabla de incidencias -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="incidencias-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tipo</th>
+          <th>Profesor</th>
+          <th>Curso</th>
+          <th>Prioridad</th>
+          <th>Estado</th>
+          <th>SLA</th>
+          <th>Asignado a</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let incidencia of incidencias">
+          <td>{{ incidencia.id }}</td>
+          <td>{{ incidencia.tipo }}</td>
+          <td>{{ incidencia.profesor_nombre || 'N/A' }}</td>
+          <td>{{ incidencia.curso || 'N/A' }}</td>
+          <td>
+            <span [class]="getPrioridadClass(incidencia.prioridad)">
+              {{ incidencia.prioridad }}
+            </span>
+          </td>
+          <td>
+            <span [class]="getStatusClass(incidencia.status)">
+              {{ incidencia.status }}
+            </span>
+          </td>
+          <td>{{ incidencia.sla || 'N/A' }}</td>
+          <td>{{ incidencia.asignado_nombre || 'N/A' }}</td>
+          <td>{{ incidencia.fecha_creacion ? formatDate(incidencia.fecha_creacion) : 'N/A' }}</td>
+          <td class="actions">
+            <button (click)="openForm(incidencia)" class="btn-edit">Editar</button>
+            <button (click)="deleteIncidencia(incidencia.id!)" class="btn-delete">Eliminar</button>
+          </td>
+        </tr>
+        <tr *ngIf="incidencias.length === 0">
+          <td colspan="10" class="no-data">No se encontraron incidencias</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Formulario Modal -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingIncidencia ? 'Editar Incidencia' : 'Nueva Incidencia' }}</h2>
+        <button (click)="closeForm()" class="close-btn">&times;</button>
+      </div>
+      <form (ngSubmit)="saveIncidencia()" class="form">
+        <div class="form-group">
+          <label>Tipo de Incidencia *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="formData.tipo" 
+            name="tipo"
+            required
+            placeholder="Ej: Cambio de fecha de examen">
+        </div>
+        <div class="form-group">
+          <label>Profesor</label>
+          <select [(ngModel)]="formData.profesor" name="profesor">
+            <option [value]="undefined">Seleccionar profesor</option>
+            <option *ngFor="let docente of docentes" [value]="docente.id">
+              {{ docente.nombre }} ({{ docente.email }})
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Curso</label>
+          <input 
+            type="text" 
+            [(ngModel)]="formData.curso" 
+            name="curso"
+            placeholder="Ej: Cálculo Integral">
+        </div>
+        <div class="form-group">
+          <label>Prioridad</label>
+          <select [(ngModel)]="formData.prioridad" name="prioridad">
+            <option value="Alta">Alta</option>
+            <option value="Media">Media</option>
+            <option value="Baja">Baja</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>SLA</label>
+          <input 
+            type="text" 
+            [(ngModel)]="formData.sla" 
+            name="sla"
+            placeholder="Ej: 48h">
+        </div>
+        <div class="form-group">
+          <label>Asignado a (ID Usuario)</label>
+          <input 
+            type="number" 
+            [(ngModel)]="formData.asignadoA" 
+            name="asignadoA"
+            placeholder="ID del usuario">
+        </div>
+        <div class="form-group">
+          <label>Evidencias</label>
+          <input 
+            type="text" 
+            [(ngModel)]="formData.evidencias" 
+            name="evidencias"
+            placeholder="Nombre del archivo">
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select [(ngModel)]="formData.status" name="status">
+            <option value="abierto">Abierto</option>
+            <option value="en proceso">En Proceso</option>
+            <option value="cerrado">Cerrado</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" (click)="closeForm()" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

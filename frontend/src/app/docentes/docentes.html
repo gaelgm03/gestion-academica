@@ -1,1 +1,150 @@
-<p>docentes works!</p>
+<div class="docentes-container">
+  <div class="header">
+    <h1>Gestión de Docentes</h1>
+    <button class="btn-primary" (click)="openForm()">+ Nuevo Docente</button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters">
+    <input 
+      type="text" 
+      placeholder="Buscar por nombre, email o grados..." 
+      [(ngModel)]="filters.search"
+      (keyup.enter)="applyFilters()"
+      class="filter-input">
+    <select [(ngModel)]="filters.estatus" class="filter-select">
+      <option value="">Todos los estatus</option>
+      <option value="activo">Activo</option>
+      <option value="inactivo">Inactivo</option>
+    </select>
+    <select [(ngModel)]="filters.sni" class="filter-select">
+      <option value="">Todos (SNI)</option>
+      <option value="1">Con SNI</option>
+      <option value="0">Sin SNI</option>
+    </select>
+    <button (click)="applyFilters()" class="btn-secondary">Filtrar</button>
+    <button (click)="clearFilters()" class="btn-secondary">Limpiar</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <p>Cargando docentes...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+    <button (click)="loadDocentes()">Reintentar</button>
+  </div>
+
+  <!-- Tabla de docentes -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="docentes-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Grados</th>
+          <th>Idioma</th>
+          <th>SNI</th>
+          <th>Estatus</th>
+          <th>Academias</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let docente of docentes">
+          <td>{{ docente.id }}</td>
+          <td>{{ docente.nombre || 'N/A' }}</td>
+          <td>{{ docente.email || 'N/A' }}</td>
+          <td>{{ docente.grados || 'N/A' }}</td>
+          <td>{{ docente.idioma || 'N/A' }}</td>
+          <td>
+            <span [class]="docente.sni ? 'badge-success' : 'badge-secondary'">
+              {{ docente.sni ? 'Sí' : 'No' }}
+            </span>
+          </td>
+          <td>
+            <span [class]="docente.estatus === 'activo' ? 'badge-success' : 'badge-warning'">
+              {{ docente.estatus }}
+            </span>
+          </td>
+          <td>{{ docente.academias || 'N/A' }}</td>
+          <td class="actions">
+            <button (click)="openForm(docente)" class="btn-edit">Editar</button>
+            <button (click)="deleteDocente(docente.id!)" class="btn-delete">Eliminar</button>
+          </td>
+        </tr>
+        <tr *ngIf="docentes.length === 0">
+          <td colspan="9" class="no-data">No se encontraron docentes</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Formulario Modal -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingDocente ? 'Editar Docente' : 'Nuevo Docente' }}</h2>
+        <button (click)="closeForm()" class="close-btn">&times;</button>
+      </div>
+      <form (ngSubmit)="saveDocente()" class="form">
+        <div class="form-group">
+          <label>ID Usuario *</label>
+          <input 
+            type="number" 
+            [(ngModel)]="formData.id_usuario" 
+            name="id_usuario"
+            required
+            [disabled]="!!editingDocente">
+        </div>
+        <div class="form-group">
+          <label>Grados Académicos</label>
+          <input 
+            type="text" 
+            [(ngModel)]="formData.grados" 
+            name="grados"
+            placeholder="Ej: Doctorado en Educación">
+        </div>
+        <div class="form-group">
+          <label>Idioma</label>
+          <input 
+            type="text" 
+            [(ngModel)]="formData.idioma" 
+            name="idioma"
+            placeholder="Ej: Inglés">
+        </div>
+        <div class="form-group">
+          <label>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="formData.sni" 
+              name="sni">
+            Miembro SNI
+          </label>
+        </div>
+        <div class="form-group">
+          <label>Link CV</label>
+          <input 
+            type="url" 
+            [(ngModel)]="formData.cvlink" 
+            name="cvlink"
+            placeholder="https://cvup.mx/...">
+        </div>
+        <div class="form-group">
+          <label>Estatus</label>
+          <select [(ngModel)]="formData.estatus" name="estatus">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" (click)="closeForm()" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
