@@ -1,10 +1,14 @@
 -- ============================================================
 --  Proyecto Final: Gestión Académica
---  Estructura: Usuario, Rol, Permiso, Docente, Academia, Incidencia
+--  Schema Completo con todas las tablas
 --  Fecha: Noviembre 2025
+--  
+--  Incluye: Roles, Usuarios, Permisos, Docentes, Academias,
+--           Tipos de Incidencia, Incidencias, Áreas de Especialidad
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS gestion_academica;
+DROP DATABASE IF EXISTS gestion_academica;
+CREATE DATABASE gestion_academica;
 USE gestion_academica;
 
 -- ============================================================
@@ -13,7 +17,7 @@ USE gestion_academica;
 CREATE TABLE rol (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL UNIQUE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO rol (nombre) VALUES
 ('admin'),
@@ -31,7 +35,7 @@ CREATE TABLE usuario (
     nombre VARCHAR(100) NOT NULL,
     rol_id INT,
     FOREIGN KEY (rol_id) REFERENCES rol(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO usuario (email, nombre, rol_id) VALUES
 ('ana.lopez@up.edu.mx', 'Ana López', 1),
@@ -62,7 +66,7 @@ CREATE TABLE permiso (
     id INT AUTO_INCREMENT PRIMARY KEY,
     scope VARCHAR(50) NOT NULL,
     action VARCHAR(50) NOT NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO permiso (scope, action) VALUES
 ('docente', 'crear'),
@@ -89,7 +93,7 @@ CREATE TABLE rol_permiso (
     FOREIGN KEY (rol_id) REFERENCES rol(id) ON DELETE CASCADE,
     FOREIGN KEY (permiso_id) REFERENCES permiso(id) ON DELETE CASCADE,
     UNIQUE KEY unique_rol_permiso (rol_id, permiso_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Asignación de permisos a roles
 INSERT INTO rol_permiso (rol_id, permiso_id) VALUES
@@ -112,11 +116,11 @@ CREATE TABLE docente (
     id_usuario INT,
     grados VARCHAR(100),
     idioma VARCHAR(50),
-    sni BOOLEAN,
+    sni BOOLEAN DEFAULT FALSE,
     cvlink VARCHAR(255),
     estatus ENUM('activo', 'inactivo') DEFAULT 'activo',
     FOREIGN KEY (id_usuario) REFERENCES usuario(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO docente (id_usuario, grados, idioma, sni, cvlink, estatus) VALUES
 (1, 'Doctorado en Educación', 'Inglés', 1, 'https://cvup.mx/ana-lopez', 'activo'),
@@ -141,7 +145,7 @@ INSERT INTO docente (id_usuario, grados, idioma, sni, cvlink, estatus) VALUES
 CREATE TABLE academia (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO academia (nombre) VALUES
 ('Ingeniería'),
@@ -166,47 +170,111 @@ CREATE TABLE docente_academia (
     FOREIGN KEY (docente_id) REFERENCES docente(id) ON DELETE CASCADE,
     FOREIGN KEY (academia_id) REFERENCES academia(id) ON DELETE CASCADE,
     UNIQUE KEY unique_docente_academia (docente_id, academia_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Asignación de docentes a academias
 INSERT INTO docente_academia (docente_id, academia_id) VALUES
--- Ana López: Ingeniería y Ciencias Exactas
 (1, 1), (1, 6),
--- Carlos Jiménez: Ingeniería
 (2, 1),
--- Sofía Torres: Psicología y Ciencias Sociales
 (3, 2), (3, 8),
--- Marco Hernández: Comunicación
 (4, 3),
--- Isabel Gómez: Economía y Negocios
 (5, 4), (5, 10),
--- Daniel Rosas: Arte y Humanidades
 (6, 5),
--- Laura Martínez: Ingeniería
 (7, 1),
--- Pedro Sánchez: Ciencias Exactas
 (8, 6),
--- Juan Pérez: Ciencias Exactas
 (9, 6),
--- Roberto García: Ciencias Naturales
 (10, 7),
--- Elena Morales: Ciencias Naturales
 (11, 7),
--- Patricia Cruz: Arte y Humanidades e Idiomas
 (12, 5), (12, 9),
--- Diana Castillo: Arte y Humanidades
 (13, 5),
--- Jorge Mendoza: Ciencias Sociales
 (14, 8),
--- Miguel Reyes: Ciencias Sociales y Psicología
 (15, 8), (15, 2);
 
 -- ============================================================
--- 6. Tabla INCIDENCIA
+-- 6. Tabla AREA_ESPECIALIDAD (Catálogo)
+-- ============================================================
+CREATE TABLE area_especialidad (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO area_especialidad (nombre, descripcion) VALUES
+('Inteligencia Artificial', 'Machine Learning, Deep Learning, NLP, Visión por Computadora'),
+('Desarrollo de Software', 'Ingeniería de Software, Arquitectura, DevOps, Testing'),
+('Bases de Datos', 'Diseño, Administración, Big Data, Data Warehousing'),
+('Redes y Telecomunicaciones', 'Infraestructura, Seguridad de Redes, IoT'),
+('Ciberseguridad', 'Seguridad Informática, Ethical Hacking, Criptografía'),
+('Ciencia de Datos', 'Análisis de Datos, Estadística, Visualización'),
+('Gestión de Proyectos', 'PMI, Agile, Scrum, Gestión de TI'),
+('Educación', 'Pedagogía, Didáctica, Tecnología Educativa'),
+('Investigación', 'Metodología, Publicación Científica, I+D'),
+('Negocios y Emprendimiento', 'Startups, Innovación, Modelos de Negocio'),
+('Finanzas', 'Contabilidad, Análisis Financiero, Economía'),
+('Marketing Digital', 'SEO, SEM, Redes Sociales, E-commerce'),
+('Recursos Humanos', 'Gestión del Talento, Capacitación, Desarrollo Organizacional'),
+('Derecho', 'Legislación, Propiedad Intelectual, Derecho Corporativo'),
+('Psicología Organizacional', 'Comportamiento Organizacional, Liderazgo'),
+('Comunicación', 'Comunicación Corporativa, Relaciones Públicas'),
+('Diseño', 'UX/UI, Diseño Gráfico, Diseño Industrial'),
+('Idiomas', 'Inglés, Francés, Alemán, Traducción'),
+('Matemáticas Aplicadas', 'Modelado, Optimización, Simulación'),
+('Física', 'Física Aplicada, Mecánica, Termodinámica');
+
+-- ============================================================
+-- 6B. Tabla DOCENTE_AREA_ESPECIALIDAD (Relación muchos a muchos)
+-- ============================================================
+CREATE TABLE docente_area_especialidad (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    docente_id INT NOT NULL,
+    area_id INT NOT NULL,
+    nivel ENUM('básico', 'intermedio', 'avanzado', 'experto') DEFAULT 'intermedio',
+    anios_experiencia INT DEFAULT 0,
+    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (docente_id) REFERENCES docente(id) ON DELETE CASCADE,
+    FOREIGN KEY (area_id) REFERENCES area_especialidad(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_docente_area (docente_id, area_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO docente_area_especialidad (docente_id, area_id, nivel, anios_experiencia) VALUES
+(1, 8, 'experto', 10),
+(1, 9, 'avanzado', 8),
+(2, 2, 'avanzado', 6),
+(2, 3, 'intermedio', 4),
+(3, 15, 'avanzado', 5),
+(3, 8, 'intermedio', 3),
+(4, 16, 'experto', 12),
+(4, 12, 'avanzado', 7),
+(7, 1, 'experto', 8),
+(7, 6, 'avanzado', 6),
+(7, 2, 'intermedio', 4);
+
+-- ============================================================
+-- 7. Tabla TIPO_INCIDENCIA (Catálogo de 5 categorías)
+-- ============================================================
+CREATE TABLE tipo_incidencia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT,
+    activo BOOLEAN DEFAULT TRUE,
+    orden INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO tipo_incidencia (nombre, descripcion, orden) VALUES
+('Cambio de calificación', 'Solicitud de modificación de calificación en el sistema', 1),
+('Cambio de fecha de examen', 'Solicitud de reprogramación de fecha de examen', 2),
+('Integridad académica', 'Reporte de violación a la integridad académica (plagio, fraude, etc.)', 3),
+('Reporte disciplinar a profesor', 'Reporte de conducta inapropiada o falta disciplinaria del profesor', 4),
+('Incidencia de pago', 'Incidencia relacionada con pagos (a favor o en contra del docente)', 5);
+
+-- ============================================================
+-- 8. Tabla INCIDENCIA (con tipo_id en lugar de tipo)
 -- ============================================================
 CREATE TABLE incidencia (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tipo VARCHAR(100) NOT NULL,
+    tipo_id INT NOT NULL,
     profesor INT,
     curso VARCHAR(100),
     prioridad ENUM('Alta','Media','Baja') DEFAULT 'Media',
@@ -215,34 +283,35 @@ CREATE TABLE incidencia (
     evidencias VARCHAR(255),
     status ENUM('abierto','en proceso','cerrado') DEFAULT 'abierto',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tipo_id) REFERENCES tipo_incidencia(id),
     FOREIGN KEY (profesor) REFERENCES docente(id),
     FOREIGN KEY (asignadoA) REFERENCES usuario(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO incidencia (tipo, profesor, curso, prioridad, sla, asignadoA, evidencias, status) VALUES
-('Cambio de fecha de examen', 1, 'Cálculo Integral', 'Alta', '48h', 2, 'evidencia1.pdf', 'abierto'),
-('Reporte de integridad académica', 2, 'Bases de Datos', 'Media', '72h', 1, 'plagio_casoA.docx', 'en proceso'),
-('Incidencia de pago pendiente', 3, 'Psicología General', 'Alta', '24h', 3, 'comprobante_pago.pdf', 'cerrado'),
-('Cambio de profesor', 4, 'Comunicación Oral', 'Media', '48h', 2, 'solicitud_cambio.docx', 'abierto'),
-('Reporte disciplinar', 5, 'Microeconomía', 'Baja', '72h', 1, 'nota_dis.pdf', 'en proceso'),
-('Aclaración de calificación', 6, 'Historia del Arte', 'Alta', '24h', 3, 'evidencia_historia.pdf', 'cerrado'),
-('Solicitud de material didáctico', 7, 'Programación Avanzada', 'Baja', '96h', 2, NULL, 'abierto'),
-('Ausencia justificada', 8, 'Álgebra Lineal', 'Media', '48h', 9, 'justificante_medico.pdf', 'en proceso'),
-('Cambio de horario', 9, 'Termodinámica', 'Alta', '24h', 1, 'solicitud_horario.docx', 'abierto'),
-('Revisión de examen', 10, 'Química Orgánica', 'Media', '72h', 11, 'examen_revision.pdf', 'abierto'),
-('Reporte de equipo dañado', 11, 'Biología Celular', 'Alta', '24h', 2, 'foto_equipo.jpg', 'en proceso'),
-('Solicitud de prórroga', 12, 'Literatura Contemporánea', 'Baja', '96h', 9, NULL, 'cerrado'),
-('Aclaración de asistencia', 13, 'Filosofía Moderna', 'Media', '48h', 1, 'lista_asistencia.pdf', 'abierto'),
-('Cambio de aula', 14, 'Historia Universal', 'Alta', '24h', 16, 'solicitud_aula.docx', 'en proceso'),
-('Reporte de plagio', 15, 'Antropología Social', 'Alta', '48h', 1, 'evidencia_plagio.pdf', 'abierto'),
-('Solicitud de tutoría', 1, 'Cálculo Diferencial', 'Baja', '120h', 2, NULL, 'abierto'),
-('Problema de acceso al sistema', 2, 'Estructuras de Datos', 'Alta', '24h', 1, 'captura_error.png', 'cerrado'),
-('Solicitud de constancia', 3, 'Psicología Clínica', 'Media', '72h', 3, NULL, 'cerrado'),
-('Reporte de acoso', 4, 'Redacción Periodística', 'Alta', '12h', 1, 'testimonio.docx', 'en proceso'),
-('Solicitud de examen extraordinario', 7, 'Circuitos Eléctricos', 'Media', '96h', 2, 'solicitud_extra.pdf', 'abierto');
+INSERT INTO incidencia (tipo_id, profesor, curso, prioridad, sla, asignadoA, evidencias, status) VALUES
+(2, 1, 'Cálculo Integral', 'Alta', '48h', 2, NULL, 'abierto'),
+(3, 2, 'Bases de Datos', 'Media', '72h', 1, NULL, 'en proceso'),
+(5, 3, 'Psicología General', 'Alta', '24h', 3, NULL, 'cerrado'),
+(1, 4, 'Comunicación Oral', 'Media', '48h', 2, NULL, 'abierto'),
+(4, 5, 'Microeconomía', 'Baja', '72h', 1, NULL, 'en proceso'),
+(1, 6, 'Historia del Arte', 'Alta', '24h', 3, NULL, 'cerrado'),
+(1, 7, 'Programación Avanzada', 'Baja', '96h', 2, NULL, 'abierto'),
+(2, 8, 'Álgebra Lineal', 'Media', '48h', 9, NULL, 'en proceso'),
+(2, 9, 'Termodinámica', 'Alta', '24h', 1, NULL, 'abierto'),
+(1, 10, 'Química Orgánica', 'Media', '72h', 11, NULL, 'abierto'),
+(4, 11, 'Biología Celular', 'Alta', '24h', 2, NULL, 'en proceso'),
+(1, 12, 'Literatura Contemporánea', 'Baja', '96h', 9, NULL, 'cerrado'),
+(1, 13, 'Filosofía Moderna', 'Media', '48h', 1, NULL, 'abierto'),
+(2, 14, 'Historia Universal', 'Alta', '24h', 16, NULL, 'en proceso'),
+(3, 15, 'Antropología Social', 'Alta', '48h', 1, NULL, 'abierto'),
+(1, 1, 'Cálculo Diferencial', 'Baja', '120h', 2, NULL, 'abierto'),
+(1, 2, 'Estructuras de Datos', 'Alta', '24h', 1, NULL, 'cerrado'),
+(1, 3, 'Psicología Clínica', 'Media', '72h', 3, NULL, 'cerrado'),
+(4, 4, 'Redacción Periodística', 'Alta', '12h', 1, NULL, 'en proceso'),
+(2, 7, 'Circuitos Eléctricos', 'Media', '96h', 2, NULL, 'abierto');
 
 -- ============================================================
--- 7. VISTA DE DASHBOARD SIMPLE (para tus reportes PHP)
+-- 9. VISTA DE DASHBOARD
 -- ============================================================
 CREATE OR REPLACE VIEW vista_dashboard AS
 SELECT
@@ -255,19 +324,23 @@ FROM docente
 LEFT JOIN incidencia ON docente.id = incidencia.profesor;
 
 -- ============================================================
--- 8. ÍNDICES PARA OPTIMIZACIÓN DE CONSULTAS
+-- 10. ÍNDICES PARA OPTIMIZACIÓN
 -- ============================================================
 CREATE INDEX idx_usuario_email ON usuario(email);
 CREATE INDEX idx_usuario_rol ON usuario(rol_id);
 CREATE INDEX idx_docente_usuario ON docente(id_usuario);
 CREATE INDEX idx_docente_estatus ON docente(estatus);
+CREATE INDEX idx_incidencia_tipo ON incidencia(tipo_id);
 CREATE INDEX idx_incidencia_profesor ON incidencia(profesor);
 CREATE INDEX idx_incidencia_asignado ON incidencia(asignadoA);
 CREATE INDEX idx_incidencia_status ON incidencia(status);
 CREATE INDEX idx_incidencia_prioridad ON incidencia(prioridad);
 CREATE INDEX idx_incidencia_fecha ON incidencia(fecha_creacion);
+CREATE INDEX idx_area_especialidad_nombre ON area_especialidad(nombre);
+CREATE INDEX idx_docente_area_docente ON docente_area_especialidad(docente_id);
+CREATE INDEX idx_docente_area_area ON docente_area_especialidad(area_id);
 
 -- ============================================================
--- FIN DEL DUMP
+-- FIN DEL SCHEMA COMPLETO
 -- ============================================================
 

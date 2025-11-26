@@ -9,37 +9,185 @@
 class Reporte {
     private $pdo;
     
+    // Períodos disponibles
+    const PERIODO_HOY = 'hoy';
+    const PERIODO_AYER = 'ayer';
+    const PERIODO_ESTA_SEMANA = 'esta_semana';
+    const PERIODO_SEMANA_PASADA = 'semana_pasada';
+    const PERIODO_ESTE_MES = 'este_mes';
+    const PERIODO_MES_PASADO = 'mes_pasado';
+    const PERIODO_ESTE_ANIO = 'este_anio';
+    const PERIODO_ULTIMOS_7_DIAS = 'ultimos_7_dias';
+    const PERIODO_ULTIMOS_30_DIAS = 'ultimos_30_dias';
+    const PERIODO_ULTIMOS_90_DIAS = 'ultimos_90_dias';
+    const PERIODO_TODO = 'todo';
+    
     public function __construct($pdo) {
         $this->pdo = $pdo;
     }
     
     /**
-     * Obtener datos del dashboard principal
+     * Convertir período a rango de fechas
      * 
+     * @param string $periodo Código del período
+     * @param string|null $fechaInicio Fecha inicio personalizada
+     * @param string|null $fechaFin Fecha fin personalizada
+     * @return array ['inicio' => date, 'fin' => date]
+     */
+    public function getPeriodoFechas($periodo, $fechaInicio = null, $fechaFin = null) {
+        $hoy = new DateTime();
+        $inicio = null;
+        $fin = $hoy->format('Y-m-d');
+        
+        switch ($periodo) {
+            case self::PERIODO_HOY:
+                $inicio = $hoy->format('Y-m-d');
+                break;
+                
+            case self::PERIODO_AYER:
+                $ayer = (clone $hoy)->modify('-1 day');
+                $inicio = $ayer->format('Y-m-d');
+                $fin = $ayer->format('Y-m-d');
+                break;
+                
+            case self::PERIODO_ESTA_SEMANA:
+                $inicioSemana = (clone $hoy)->modify('monday this week');
+                $inicio = $inicioSemana->format('Y-m-d');
+                break;
+                
+            case self::PERIODO_SEMANA_PASADA:
+                $inicioSemana = (clone $hoy)->modify('monday last week');
+                $finSemana = (clone $hoy)->modify('sunday last week');
+                $inicio = $inicioSemana->format('Y-m-d');
+                $fin = $finSemana->format('Y-m-d');
+                break;
+                
+            case self::PERIODO_ESTE_MES:
+                $inicio = $hoy->format('Y-m-01');
+                break;
+                
+            case self::PERIODO_MES_PASADO:
+                $mesAnterior = (clone $hoy)->modify('first day of last month');
+                $finMesAnterior = (clone $hoy)->modify('last day of last month');
+                $inicio = $mesAnterior->format('Y-m-d');
+                $fin = $finMesAnterior->format('Y-m-d');
+                break;
+                
+            case self::PERIODO_ESTE_ANIO:
+                $inicio = $hoy->format('Y-01-01');
+                break;
+                
+            case self::PERIODO_ULTIMOS_7_DIAS:
+                $inicio = (clone $hoy)->modify('-7 days')->format('Y-m-d');
+                break;
+                
+            case self::PERIODO_ULTIMOS_30_DIAS:
+                $inicio = (clone $hoy)->modify('-30 days')->format('Y-m-d');
+                break;
+                
+            case self::PERIODO_ULTIMOS_90_DIAS:
+                $inicio = (clone $hoy)->modify('-90 days')->format('Y-m-d');
+                break;
+                
+            case 'personalizado':
+                $inicio = $fechaInicio ?: $hoy->format('Y-m-01');
+                $fin = $fechaFin ?: $hoy->format('Y-m-d');
+                break;
+                
+            case self::PERIODO_TODO:
+            default:
+                $inicio = '2000-01-01';
+                break;
+        }
+        
+        return [
+            'inicio' => $inicio,
+            'fin' => $fin,
+            'periodo' => $periodo,
+            'descripcion' => $this->getDescripcionPeriodo($periodo, $inicio, $fin)
+        ];
+    }
+    
+    /**
+     * Obtener descripción legible del período
+     */
+    private function getDescripcionPeriodo($periodo, $inicio, $fin) {
+        $descripciones = [
+            'hoy' => 'Hoy',
+            'ayer' => 'Ayer',
+            'esta_semana' => 'Esta semana',
+            'semana_pasada' => 'Semana pasada',
+            'este_mes' => 'Este mes',
+            'mes_pasado' => 'Mes pasado',
+            'este_anio' => 'Este año',
+            'ultimos_7_dias' => 'Últimos 7 días',
+            'ultimos_30_dias' => 'Últimos 30 días',
+            'ultimos_90_dias' => 'Últimos 90 días',
+            'todo' => 'Todo el historial'
+        ];
+        
+        if ($periodo === 'personalizado') {
+            return "Del $inicio al $fin";
+        }
+        
+        return $descripciones[$periodo] ?? "Del $inicio al $fin";
+    }
+    
+    /**
+     * Obtener lista de períodos disponibles
+     */
+    public function getPeriodosDisponibles() {
+        return [
+            ['id' => 'hoy', 'nombre' => 'Hoy'],
+            ['id' => 'ayer', 'nombre' => 'Ayer'],
+            ['id' => 'esta_semana', 'nombre' => 'Esta semana'],
+            ['id' => 'semana_pasada', 'nombre' => 'Semana pasada'],
+            ['id' => 'este_mes', 'nombre' => 'Este mes'],
+            ['id' => 'mes_pasado', 'nombre' => 'Mes pasado'],
+            ['id' => 'ultimos_7_dias', 'nombre' => 'Últimos 7 días'],
+            ['id' => 'ultimos_30_dias', 'nombre' => 'Últimos 30 días'],
+            ['id' => 'ultimos_90_dias', 'nombre' => 'Últimos 90 días'],
+            ['id' => 'este_anio', 'nombre' => 'Este año'],
+            ['id' => 'todo', 'nombre' => 'Todo'],
+            ['id' => 'personalizado', 'nombre' => 'Personalizado']
+        ];
+    }
+    
+    /**
+     * Obtener datos del dashboard principal con filtro de período
+     * 
+     * @param string $periodo Código del período
+     * @param string|null $fechaInicio Fecha inicio (para período personalizado)
+     * @param string|null $fechaFin Fecha fin (para período personalizado)
      * @return array Dashboard con todas las estadísticas
      */
-    public function getDashboard() {
+    public function getDashboard($periodo = 'todo', $fechaInicio = null, $fechaFin = null) {
         $dashboard = [];
+        $fechas = $this->getPeriodoFechas($periodo, $fechaInicio, $fechaFin);
+        $dashboard['periodo'] = $fechas;
         
-        // 1. Estadísticas generales usando la vista
+        // 1. Estadísticas generales (docentes no se filtran por fecha)
         $sql = "SELECT * FROM vista_dashboard";
         $stmt = $this->pdo->query($sql);
         $dashboard['dashboard'] = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // 2. Incidencias por estado
+        // 2. Incidencias por estado (filtrado por período)
         $sql = "
             SELECT status, COUNT(*) as cantidad
             FROM incidencia
+            WHERE DATE(fecha_creacion) BETWEEN :inicio AND :fin
             GROUP BY status
             ORDER BY cantidad DESC
         ";
-        $stmt = $this->pdo->query($sql);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
         $dashboard['incidencias_por_estado'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // 3. Incidencias por prioridad
+        // 3. Incidencias por prioridad (filtrado por período)
         $sql = "
             SELECT prioridad, COUNT(*) as cantidad
             FROM incidencia
+            WHERE DATE(fecha_creacion) BETWEEN :inicio AND :fin
             GROUP BY prioridad
             ORDER BY 
                 CASE prioridad
@@ -48,10 +196,11 @@ class Reporte {
                     WHEN 'Baja' THEN 3
                 END
         ";
-        $stmt = $this->pdo->query($sql);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
         $dashboard['incidencias_por_prioridad'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // 4. Docentes por estatus
+        // 4. Docentes por estatus (no se filtra por fecha)
         $sql = "
             SELECT estatus, COUNT(*) as cantidad
             FROM docente
@@ -60,6 +209,30 @@ class Reporte {
         ";
         $stmt = $this->pdo->query($sql);
         $dashboard['docentes_por_estatus'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // 5. Conteo de incidencias en el período
+        $sql = "
+            SELECT COUNT(*) as total_periodo
+            FROM incidencia
+            WHERE DATE(fecha_creacion) BETWEEN :inicio AND :fin
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
+        $dashboard['incidencias_periodo'] = $stmt->fetch(PDO::FETCH_ASSOC)['total_periodo'];
+        
+        // 6. Incidencias por día (para gráfica de tendencia)
+        $sql = "
+            SELECT 
+                DATE(fecha_creacion) as fecha,
+                COUNT(*) as cantidad
+            FROM incidencia
+            WHERE DATE(fecha_creacion) BETWEEN :inicio AND :fin
+            GROUP BY DATE(fecha_creacion)
+            ORDER BY fecha ASC
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
+        $dashboard['tendencia_diaria'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         return $dashboard;
     }
@@ -259,5 +432,160 @@ class Reporte {
             'distribucion_grados' => $this->getDistribucionGrados(),
             'distribucion_idiomas' => $this->getDistribucionIdiomas()
         ];
+    }
+    
+    // ========================================================================
+    // EXPORTACIÓN CSV
+    // ========================================================================
+    
+    /**
+     * Obtener datos de incidencias para exportación CSV
+     * 
+     * @param string $periodo Código del período
+     * @param string|null $fechaInicio Fecha inicio personalizada
+     * @param string|null $fechaFin Fecha fin personalizada
+     * @return array Datos de incidencias
+     */
+    public function getIncidenciasParaExportar($periodo = 'todo', $fechaInicio = null, $fechaFin = null) {
+        $fechas = $this->getPeriodoFechas($periodo, $fechaInicio, $fechaFin);
+        
+        $sql = "
+            SELECT 
+                i.id,
+                ti.nombre as tipo,
+                COALESCE(u_prof.nombre, 'N/A') as profesor,
+                i.curso,
+                i.prioridad,
+                i.sla,
+                COALESCE(u_asig.nombre, 'N/A') as asignado_a,
+                i.status,
+                DATE_FORMAT(i.fecha_creacion, '%Y-%m-%d %H:%i:%s') as fecha_creacion
+            FROM incidencia i
+            INNER JOIN tipo_incidencia ti ON i.tipo_id = ti.id
+            LEFT JOIN docente d ON i.profesor = d.id
+            LEFT JOIN usuario u_prof ON d.id_usuario = u_prof.id
+            LEFT JOIN usuario u_asig ON i.asignadoA = u_asig.id
+            WHERE DATE(i.fecha_creacion) BETWEEN :inicio AND :fin
+            ORDER BY i.fecha_creacion DESC
+        ";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
+        
+        return [
+            'periodo' => $fechas,
+            'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'headers' => ['ID', 'Tipo', 'Profesor', 'Curso', 'Prioridad', 'SLA', 'Asignado a', 'Estado', 'Fecha Creación']
+        ];
+    }
+    
+    /**
+     * Obtener datos de docentes para exportación CSV
+     * 
+     * @return array Datos de docentes
+     */
+    public function getDocentesParaExportar() {
+        $sql = "
+            SELECT 
+                d.id,
+                u.nombre,
+                u.email,
+                d.grados,
+                d.idioma,
+                CASE WHEN d.sni = 1 THEN 'Sí' ELSE 'No' END as sni,
+                d.estatus,
+                GROUP_CONCAT(DISTINCT a.nombre SEPARATOR ', ') as academias,
+                GROUP_CONCAT(DISTINCT ae.nombre SEPARATOR ', ') as areas_especialidad
+            FROM docente d
+            INNER JOIN usuario u ON d.id_usuario = u.id
+            LEFT JOIN docente_academia da ON d.id = da.docente_id
+            LEFT JOIN academia a ON da.academia_id = a.id
+            LEFT JOIN docente_area_especialidad dae ON d.id = dae.docente_id
+            LEFT JOIN area_especialidad ae ON dae.area_id = ae.id
+            GROUP BY d.id, u.nombre, u.email, d.grados, d.idioma, d.sni, d.estatus
+            ORDER BY u.nombre ASC
+        ";
+        
+        $stmt = $this->pdo->query($sql);
+        
+        return [
+            'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'headers' => ['ID', 'Nombre', 'Email', 'Grados', 'Idioma', 'SNI', 'Estatus', 'Academias', 'Áreas de Especialidad']
+        ];
+    }
+    
+    /**
+     * Obtener estadísticas generales para exportación CSV
+     * 
+     * @param string $periodo Código del período
+     * @param string|null $fechaInicio Fecha inicio personalizada
+     * @param string|null $fechaFin Fecha fin personalizada
+     * @return array Datos de estadísticas
+     */
+    public function getEstadisticasParaExportar($periodo = 'todo', $fechaInicio = null, $fechaFin = null) {
+        $dashboard = $this->getDashboard($periodo, $fechaInicio, $fechaFin);
+        
+        $datos = [];
+        
+        // Estadísticas generales
+        $datos[] = ['Métrica', 'Valor'];
+        $datos[] = ['Total Docentes', $dashboard['dashboard']['total_docentes']];
+        $datos[] = ['Docentes Activos', $dashboard['dashboard']['docentes_activos']];
+        $datos[] = ['Docentes SNI', $dashboard['dashboard']['docentes_sni']];
+        $datos[] = ['Total Incidencias', $dashboard['dashboard']['total_incidencias']];
+        $datos[] = ['Incidencias Abiertas', $dashboard['dashboard']['incidencias_abiertas']];
+        $datos[] = ['Incidencias en Período', $dashboard['incidencias_periodo']];
+        $datos[] = [''];
+        
+        // Incidencias por estado
+        $datos[] = ['Estado', 'Cantidad'];
+        foreach ($dashboard['incidencias_por_estado'] as $item) {
+            $datos[] = [$item['status'], $item['cantidad']];
+        }
+        $datos[] = [''];
+        
+        // Incidencias por prioridad
+        $datos[] = ['Prioridad', 'Cantidad'];
+        foreach ($dashboard['incidencias_por_prioridad'] as $item) {
+            $datos[] = [$item['prioridad'], $item['cantidad']];
+        }
+        
+        return [
+            'periodo' => $dashboard['periodo'],
+            'datos' => $datos,
+            'headers' => null // Los headers están incluidos en los datos
+        ];
+    }
+    
+    /**
+     * Convertir array de datos a formato CSV
+     * 
+     * @param array $data Datos a convertir
+     * @param array|null $headers Encabezados (opcional)
+     * @return string Contenido CSV
+     */
+    public static function arrayToCsv($data, $headers = null) {
+        $output = fopen('php://temp', 'r+');
+        
+        // BOM para UTF-8 (para que Excel reconozca los caracteres especiales)
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+        
+        // Escribir headers si existen
+        if ($headers) {
+            fputcsv($output, $headers, ';');
+        }
+        
+        // Escribir datos
+        foreach ($data as $row) {
+            if (is_array($row)) {
+                fputcsv($output, $row, ';');
+            }
+        }
+        
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
+        
+        return $csv;
     }
 }

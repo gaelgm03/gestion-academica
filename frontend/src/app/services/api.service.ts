@@ -9,6 +9,15 @@ const API_URL = 'http://localhost/gestion_academica/backend';
 // const API_URL_INCIDENCIAS = 'http://localhost/gestion_academica/backend/api/incidencias.php';
 // const API_URL_REPORTES = 'http://localhost/gestion_academica/backend/api/reportes.php';
 
+export interface AreaEspecialidad {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  nivel?: 'básico' | 'intermedio' | 'avanzado' | 'experto';
+  anios_experiencia?: number;
+  fecha_asignacion?: string;
+}
+
 export interface Docente {
   id?: number;
   id_usuario?: number;
@@ -21,6 +30,8 @@ export interface Docente {
   estatus?: 'activo' | 'inactivo';
   academias?: string;
   academia_ids?: number[];
+  areas_especialidad?: string;
+  area_ids?: number[];
 }
 
 export interface TipoIncidencia {
@@ -46,7 +57,29 @@ export interface Incidencia {
   fecha_creacion?: string;
 }
 
+export interface UploadedFile {
+  filename: string;
+  original_name?: string;
+  size: number;
+  mime_type?: string;
+  path: string;
+  modified?: string;
+}
+
+export interface Periodo {
+  id: string;
+  nombre: string;
+}
+
+export interface PeriodoInfo {
+  inicio: string;
+  fin: string;
+  periodo: string;
+  descripcion: string;
+}
+
 export interface Dashboard {
+  periodo?: PeriodoInfo;
   dashboard: {
     total_docentes: number;
     docentes_sni: number;
@@ -57,6 +90,8 @@ export interface Dashboard {
   incidencias_por_estado: Array<{ status: string; cantidad: number }>;
   incidencias_por_prioridad: Array<{ prioridad: string; cantidad: number }>;
   docentes_por_estatus: Array<{ estatus: string; cantidad: number }>;
+  incidencias_periodo?: number;
+  tendencia_diaria?: Array<{ fecha: string; cantidad: number }>;
 }
 
 export interface ApiResponse<T> {
@@ -76,6 +111,7 @@ export class ApiService {
     estatus?: string;
     sni?: number;
     academia_id?: number;
+    area_id?: number;
     search?: string;
   }): Observable<ApiResponse<Docente[]>> {
     let params = new HttpParams();
@@ -108,6 +144,15 @@ export class ApiService {
 
   getDocentesStats(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(`${API_URL}/api/docentes.php?action=stats`);
+  }
+
+  // ========== ÁREAS DE ESPECIALIDAD ==========
+  getAreasEspecialidad(): Observable<ApiResponse<AreaEspecialidad[]>> {
+    return this.http.get<ApiResponse<AreaEspecialidad[]>>(`${API_URL}/api/docentes.php?action=areas`);
+  }
+
+  getAreasDelDocente(docenteId: number): Observable<ApiResponse<AreaEspecialidad[]>> {
+    return this.http.get<ApiResponse<AreaEspecialidad[]>>(`${API_URL}/api/docentes.php?action=areas&id=${docenteId}`);
   }
 
   // ========== INCIDENCIAS ==========
@@ -157,8 +202,57 @@ export class ApiService {
   }
 
   // ========== REPORTES ==========
-  getDashboard(): Observable<ApiResponse<Dashboard>> {
-    return this.http.get<ApiResponse<Dashboard>>(`${API_URL}/api/reportes.php?tipo=dashboard`);
+  getPeriodos(): Observable<ApiResponse<Periodo[]>> {
+    return this.http.get<ApiResponse<Periodo[]>>(`${API_URL}/api/reportes.php?tipo=periodos`);
+  }
+
+  getDashboard(periodo: string = 'todo', fechaInicio?: string, fechaFin?: string): Observable<ApiResponse<Dashboard>> {
+    let params = new HttpParams().set('tipo', 'dashboard').set('periodo', periodo);
+    if (fechaInicio) params = params.set('fecha_inicio', fechaInicio);
+    if (fechaFin) params = params.set('fecha_fin', fechaFin);
+    return this.http.get<ApiResponse<Dashboard>>(`${API_URL}/api/reportes.php`, { params });
+  }
+
+  // URLs para exportación CSV (se abren directamente en el navegador)
+  getExportUrl(tipo: 'incidencias' | 'docentes' | 'estadisticas', periodo: string = 'todo', fechaInicio?: string, fechaFin?: string): string {
+    const token = localStorage.getItem('access_token');
+    let url = `${API_URL}/api/reportes.php?tipo=exportar_${tipo}&periodo=${periodo}`;
+    if (fechaInicio) url += `&fecha_inicio=${fechaInicio}`;
+    if (fechaFin) url += `&fecha_fin=${fechaFin}`;
+    if (token) url += `&token=${encodeURIComponent(token)}`;
+    return url;
+  }
+
+  // ========== UPLOAD DE ARCHIVOS ==========
+  uploadFile(file: File, incidenciaId?: number): Observable<ApiResponse<UploadedFile>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (incidenciaId) {
+      formData.append('incidencia_id', incidenciaId.toString());
+    }
+    return this.http.post<ApiResponse<UploadedFile>>(`${API_URL}/api/upload.php`, formData);
+  }
+
+  getIncidenciaFiles(incidenciaId: number): Observable<ApiResponse<{ files: UploadedFile[], total: number }>> {
+    return this.http.get<ApiResponse<{ files: UploadedFile[], total: number }>>(
+      `${API_URL}/api/upload.php?incidencia_id=${incidenciaId}`
+    );
+  }
+
+  deleteFile(filename: string, incidenciaId?: number): Observable<ApiResponse<any>> {
+    let url = `${API_URL}/api/upload.php?filename=${encodeURIComponent(filename)}`;
+    if (incidenciaId) {
+      url += `&incidencia_id=${incidenciaId}`;
+    }
+    return this.http.delete<ApiResponse<any>>(url);
+  }
+
+  getFileUrl(path: string): string {
+    return `${API_URL}/${path}`;
+  }
+
+  getDownloadUrl(incidenciaId: number, filename: string): string {
+    return `${API_URL}/api/download.php?incidencia_id=${incidenciaId}&file=${encodeURIComponent(filename)}`;
   }
 }
 

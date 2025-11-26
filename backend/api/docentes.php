@@ -85,6 +85,18 @@ try {
                 $stats = $docenteModel->getStats();
                 jsonResponse(true, 'Estadísticas obtenidas', $stats);
                 
+            } elseif ($action === 'areas') {
+                // Obtener áreas de especialidad
+                if ($id) {
+                    // Áreas de un docente específico
+                    $areas = $docenteModel->getAreasDelDocente($id);
+                    jsonResponse(true, 'Áreas del docente obtenidas', $areas);
+                } else {
+                    // Catálogo completo de áreas
+                    $areas = $docenteModel->getAreasEspecialidad();
+                    jsonResponse(true, 'Catálogo de áreas de especialidad', $areas);
+                }
+                
             } elseif ($id) {
                 // Obtener un docente específico
                 $docente = $docenteModel->getById($id);
@@ -101,6 +113,7 @@ try {
                     'estatus' => $_GET['estatus'] ?? null,
                     'sni' => $_GET['sni'] ?? null,
                     'academia_id' => $_GET['academia_id'] ?? null,
+                    'area_id' => $_GET['area_id'] ?? null,
                     'search' => $_GET['search'] ?? null
                 ];
                 

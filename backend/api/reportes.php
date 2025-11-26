@@ -34,8 +34,26 @@ function jsonResponse($success, $message, $data = null, $code = 200) {
     exit();
 }
 
+// Función helper para respuestas CSV
+function csvResponse($csv, $filename) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: no-cache, must-revalidate');
+    header('Pragma: no-cache');
+    echo $csv;
+    exit();
+}
+
 // Inicializar autenticación
 $auth = new AuthMiddleware($pdo);
+
+// Para exportaciones CSV, permitir token via query parameter
+$tipo = $_GET['tipo'] ?? 'dashboard';
+if (strpos($tipo, 'exportar_') === 0 && isset($_GET['token'])) {
+    // Inyectar token en el header para exportaciones
+    $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $_GET['token'];
+}
+
 $auth->requireAuth(); // Requiere estar autenticado para acceder a este endpoint
 
 // Inicializar modelo
@@ -52,10 +70,21 @@ try {
     // Obtener el tipo de reporte solicitado
     $tipo = $_GET['tipo'] ?? 'dashboard';
     
+    // Parámetros de período (disponibles para todos los reportes)
+    $periodo = $_GET['periodo'] ?? 'todo';
+    $fechaInicio = $_GET['fecha_inicio'] ?? null;
+    $fechaFin = $_GET['fecha_fin'] ?? null;
+    
     switch ($tipo) {
+        case 'periodos':
+            // Obtener lista de períodos disponibles
+            $data = $reporteModel->getPeriodosDisponibles();
+            jsonResponse(true, 'Períodos disponibles', $data);
+            break;
+            
         case 'dashboard':
-            // Reporte principal del dashboard
-            $data = $reporteModel->getDashboard();
+            // Reporte principal del dashboard con filtro de período
+            $data = $reporteModel->getDashboard($periodo, $fechaInicio, $fechaFin);
             jsonResponse(true, 'Dashboard obtenido exitosamente', $data);
             break;
             
@@ -111,6 +140,34 @@ try {
             $data = $reporteModel->getResumenEjecutivo();
             jsonResponse(true, 'Resumen ejecutivo del sistema', $data);
             break;
+        
+        // ============================================================
+        // EXPORTACIONES CSV
+        // ============================================================
+        
+        case 'exportar_incidencias':
+            // Exportar incidencias a CSV
+            $exportData = $reporteModel->getIncidenciasParaExportar($periodo, $fechaInicio, $fechaFin);
+            $csv = Reporte::arrayToCsv($exportData['datos'], $exportData['headers']);
+            $filename = 'incidencias_' . date('Y-m-d_His') . '.csv';
+            csvResponse($csv, $filename);
+            break;
+            
+        case 'exportar_docentes':
+            // Exportar docentes a CSV
+            $exportData = $reporteModel->getDocentesParaExportar();
+            $csv = Reporte::arrayToCsv($exportData['datos'], $exportData['headers']);
+            $filename = 'docentes_' . date('Y-m-d_His') . '.csv';
+            csvResponse($csv, $filename);
+            break;
+            
+        case 'exportar_estadisticas':
+            // Exportar estadísticas a CSV
+            $exportData = $reporteModel->getEstadisticasParaExportar($periodo, $fechaInicio, $fechaFin);
+            $csv = Reporte::arrayToCsv($exportData['datos'], $exportData['headers']);
+            $filename = 'estadisticas_' . date('Y-m-d_His') . '.csv';
+            csvResponse($csv, $filename);
+            break;
             
         default:
             jsonResponse(false, 'Tipo de reporte no válido', [
@@ -123,7 +180,10 @@ try {
                     'distribucion_grados',
                     'distribucion_idiomas',
                     'usuarios_mas_asignaciones',
-                    'resumen_ejecutivo'
+                    'resumen_ejecutivo',
+                    'exportar_incidencias',
+                    'exportar_docentes',
+                    'exportar_estadisticas'
                 ]
             ], 400);
             break;

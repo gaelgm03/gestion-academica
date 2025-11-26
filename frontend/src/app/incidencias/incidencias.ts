@@ -2,7 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Incidencia, Docente, TipoIncidencia } from '../services/api.service';
+import { ApiService, Incidencia, Docente, TipoIncidencia, UploadedFile } from '../services/api.service';
 
 @Component({
   selector: 'app-incidencias',
@@ -18,6 +18,11 @@ export class Incidencias implements OnInit {
   error: string | null = null;
   showForm = false;
   editingIncidencia: Incidencia | null = null;
+  
+  // Upload de archivos
+  uploadedFiles: UploadedFile[] = [];
+  uploading = false;
+  selectedFile: File | null = null;
   formData: Incidencia = {
     tipo_id: undefined,
     profesor: undefined,
@@ -98,8 +103,13 @@ export class Incidencias implements OnInit {
     if (incidencia) {
       this.editingIncidencia = incidencia;
       this.formData = { ...incidencia };
+      // Cargar archivos si es edición
+      if (incidencia.id) {
+        this.loadFiles(incidencia.id);
+      }
     } else {
       this.resetForm();
+      this.uploadedFiles = [];
     }
     this.showForm = true;
   }
@@ -233,5 +243,136 @@ export class Incidencias implements OnInit {
     if (!this.formData.tipo_id) return '';
     const tipo = this.tiposIncidencia.find(t => t.id === this.formData.tipo_id);
     return tipo?.descripcion || '';
+  }
+
+  // ========== MANEJO DE ARCHIVOS ==========
+  
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+    }
+  }
+
+  uploadFile() {
+    if (!this.selectedFile) {
+      alert('Selecciona un archivo primero');
+      return;
+    }
+
+    // Validar tamaño (10MB)
+    if (this.selectedFile.size > 10 * 1024 * 1024) {
+      alert('El archivo excede el tamaño máximo de 10MB');
+      return;
+    }
+
+    this.uploading = true;
+    const incidenciaId = this.editingIncidencia?.id;
+
+    this.apiService.uploadFile(this.selectedFile, incidenciaId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.uploadedFiles.push(response.data);
+          this.selectedFile = null;
+          // Limpiar input file
+          const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+          if (fileInput) fileInput.value = '';
+          
+          // Actualizar formData.evidencias (tanto para nuevas como existentes)
+          const currentFiles = this.formData.evidencias ? this.formData.evidencias.split(',').filter(f => f.trim()) : [];
+          currentFiles.push(response.data.filename);
+          this.formData.evidencias = currentFiles.join(',');
+          
+          // Refrescar lista de incidencias si es edición
+          if (incidenciaId) {
+            this.loadIncidencias();
+          }
+        } else {
+          alert('Error: ' + response.message);
+        }
+        this.uploading = false;
+      },
+      error: (err) => {
+        alert('Error al subir archivo: ' + (err.error?.message || err.message));
+        this.uploading = false;
+      }
+    });
+  }
+
+  loadFiles(incidenciaId: number) {
+    this.apiService.getIncidenciaFiles(incidenciaId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.uploadedFiles = response.data.files;
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar archivos:', err);
+      }
+    });
+  }
+
+  deleteFile(file: UploadedFile) {
+    if (!confirm(`¿Eliminar el archivo ${file.filename}?`)) return;
+
+    const incidenciaId = this.editingIncidencia?.id;
+    
+    this.apiService.deleteFile(file.filename, incidenciaId).subscribe({
+      next: (response) => {
+        console.log('Delete response:', response);
+        if (response.success) {
+          this.uploadedFiles = this.uploadedFiles.filter(f => f.filename !== file.filename);
+          // Actualizar también el formData.evidencias
+          if (this.formData.evidencias) {
+            const files = this.formData.evidencias.split(',').filter(f => f.trim() !== file.filename);
+            this.formData.evidencias = files.length > 0 ? files.join(',') : null as any;
+          }
+          // Refrescar lista de incidencias para actualizar iconos en la tabla
+          this.loadIncidencias();
+          alert('Archivo eliminado. DB updated: ' + response.data?.db_updated);
+        } else {
+          alert('Error: ' + response.message);
+        }
+      },
+      error: (err) => {
+        console.error('Delete error:', err);
+        alert('Error al eliminar: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  getFileUrl(file: UploadedFile): string {
+    // Usar endpoint de descarga si tenemos incidencia_id
+    if (this.editingIncidencia?.id) {
+      return this.apiService.getDownloadUrl(this.editingIncidencia.id, file.filename);
+    }
+    return this.apiService.getFileUrl(file.path);
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  getFileIcon(filename: string): string {
+    const ext = filename.split('.').pop()?.toLowerCase() || '';
+    switch (ext) {
+      case 'pdf': return '📄';
+      case 'doc': case 'docx': return '🗒️';
+      case 'xls': case 'xlsx': return '📊';
+      case 'jpg': case 'jpeg': case 'png': case 'gif': case 'webp': return '🖼️';
+      default: return '📁';
+    }
+  }
+
+  // Helpers para mostrar evidencias en la tabla
+  getEvidenciasArray(evidencias: string): string[] {
+    if (!evidencias) return [];
+    return evidencias.split(',').map(f => f.trim()).filter(f => f);
+  }
+
+  getEvidenciaUrl(incidenciaId: number, filename: string): string {
+    return this.apiService.getDownloadUrl(incidenciaId, filename);
   }
 }

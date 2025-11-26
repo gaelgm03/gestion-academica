@@ -162,9 +162,67 @@ Después de la migración:
 
 ---
 
-## 📝 Historial de Migraciones
+---
+
+## 🎯 Migración 003: Áreas de Especialidad para Docentes
+
+### ✅ Descripción
+
+Esta migración agrega el catálogo de áreas de especialidad y su relación muchos-a-muchos con docentes, permitiendo:
+
+- Definir áreas de conocimiento especializadas
+- Asignar múltiples áreas a cada docente
+- Especificar nivel de dominio y años de experiencia por área
+
+### � Cómo ejecutar la migración
+
+```bash
+# Desde línea de comandos
+mysql -u root -p gestion_academica < 003_areas_especialidad.sql
+```
+
+### 📋 Qué hace la migración
+
+1. **Crea tabla `area_especialidad`:**
+   - 20 áreas predefinidas (IA, Desarrollo, Bases de Datos, etc.)
+
+2. **Crea tabla `docente_area_especialidad`:**
+   - Relación muchos-a-muchos
+   - Campo `nivel`: básico, intermedio, avanzado, experto
+   - Campo `anios_experiencia`: años de experiencia en el área
+
+3. **Inserta datos de ejemplo** para algunos docentes existentes
+
+### ✅ Verificación
+
+```sql
+-- Ver áreas disponibles
+SELECT * FROM area_especialidad ORDER BY nombre;
+
+-- Ver docentes con sus áreas
+SELECT 
+    u.nombre as docente,
+    GROUP_CONCAT(ae.nombre) as areas
+FROM docente d
+INNER JOIN usuario u ON d.id_usuario = u.id
+LEFT JOIN docente_area_especialidad dae ON d.id = dae.docente_id
+LEFT JOIN area_especialidad ae ON dae.area_id = ae.id
+GROUP BY d.id, u.nombre;
+```
+
+### 📊 Impacto en el código
+
+- ✅ **Backend:** `models/Docente.php` - Métodos para gestionar áreas
+- ✅ **Backend:** `api/docentes.php` - Endpoint `?action=areas`
+- ✅ **Frontend:** `api.service.ts` - Interface y métodos para áreas
+- ✅ **Frontend:** `docentes.ts/html` - Selector de áreas en formulario
+
+---
+
+## �📝 Historial de Migraciones
 
 | # | Nombre | Fecha | Descripción |
 |---|--------|-------|-------------|
 | 001 | `schema.sql` | 2025-11-25 | Schema inicial del proyecto |
 | 002 | `002_categorias_incidencias.sql` | 2025-11-25 | Categorías predefinidas para incidencias |
+| 003 | `003_areas_especialidad.sql` | 2025-11-25 | Áreas de especialidad para docentes |

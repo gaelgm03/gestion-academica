@@ -32,11 +32,15 @@ class Docente {
                 d.cvlink,
                 d.estatus,
                 GROUP_CONCAT(DISTINCT a.nombre ORDER BY a.nombre SEPARATOR ', ') as academias,
-                GROUP_CONCAT(DISTINCT da.academia_id ORDER BY da.academia_id) as academia_ids
+                GROUP_CONCAT(DISTINCT da.academia_id ORDER BY da.academia_id) as academia_ids,
+                GROUP_CONCAT(DISTINCT ae.nombre ORDER BY ae.nombre SEPARATOR ', ') as areas_especialidad,
+                GROUP_CONCAT(DISTINCT dae.area_id ORDER BY dae.area_id) as area_ids
             FROM docente d
             INNER JOIN usuario u ON d.id_usuario = u.id
             LEFT JOIN docente_academia da ON d.id = da.docente_id
             LEFT JOIN academia a ON da.academia_id = a.id
+            LEFT JOIN docente_area_especialidad dae ON d.id = dae.docente_id
+            LEFT JOIN area_especialidad ae ON dae.area_id = ae.id
             WHERE 1=1
         ";
         
@@ -58,6 +62,12 @@ class Docente {
         if (isset($filters['academia_id']) && $filters['academia_id'] !== '') {
             $sql .= " AND da.academia_id = :academia_id";
             $params[':academia_id'] = (int)$filters['academia_id'];
+        }
+        
+        // Filtro por área de especialidad
+        if (isset($filters['area_id']) && $filters['area_id'] !== '') {
+            $sql .= " AND dae.area_id = :area_id";
+            $params[':area_id'] = (int)$filters['area_id'];
         }
         
         $sql .= " GROUP BY d.id, d.id_usuario, u.nombre, u.email, d.grados, d.idioma, d.sni, d.cvlink, d.estatus";
@@ -102,11 +112,15 @@ class Docente {
                 d.cvlink,
                 d.estatus,
                 GROUP_CONCAT(DISTINCT a.nombre ORDER BY a.nombre SEPARATOR ', ') as academias,
-                GROUP_CONCAT(DISTINCT da.academia_id ORDER BY da.academia_id) as academia_ids
+                GROUP_CONCAT(DISTINCT da.academia_id ORDER BY da.academia_id) as academia_ids,
+                GROUP_CONCAT(DISTINCT ae.nombre ORDER BY ae.nombre SEPARATOR ', ') as areas_especialidad,
+                GROUP_CONCAT(DISTINCT dae.area_id ORDER BY dae.area_id) as area_ids
             FROM docente d
             INNER JOIN usuario u ON d.id_usuario = u.id
             LEFT JOIN docente_academia da ON d.id = da.docente_id
             LEFT JOIN academia a ON da.academia_id = a.id
+            LEFT JOIN docente_area_especialidad dae ON d.id = dae.docente_id
+            LEFT JOIN area_especialidad ae ON dae.area_id = ae.id
             WHERE d.id = :id
             GROUP BY d.id, d.id_usuario, u.nombre, u.email, d.grados, d.idioma, d.sni, d.cvlink, d.estatus
         ";
@@ -163,6 +177,11 @@ class Docente {
             // 3. Asignar academias si se proporcionaron
             if (isset($data['academia_ids']) && is_array($data['academia_ids'])) {
                 $this->assignAcademias($docenteId, $data['academia_ids']);
+            }
+            
+            // 4. Asignar áreas de especialidad si se proporcionaron
+            if (isset($data['area_ids']) && is_array($data['area_ids'])) {
+                $this->assignAreasEspecialidad($docenteId, $data['area_ids']);
             }
             
             $this->pdo->commit();
@@ -263,6 +282,14 @@ class Docente {
                 $this->assignAcademias($id, $data['academia_ids']);
             }
             
+            // 5. Actualizar áreas de especialidad si se proporcionaron
+            if (isset($data['area_ids']) && is_array($data['area_ids'])) {
+                // Eliminar asignaciones actuales
+                $this->pdo->prepare("DELETE FROM docente_area_especialidad WHERE docente_id = ?")->execute([$id]);
+                // Asignar nuevas áreas
+                $this->assignAreasEspecialidad($id, $data['area_ids']);
+            }
+            
             $this->pdo->commit();
             return true;
             
@@ -303,6 +330,80 @@ class Docente {
     }
     
     /**
+     * Asignar áreas de especialidad a un docente
+     * 
+     * @param int $docenteId ID del docente
+     * @param array $areaIds Array de IDs de áreas (puede incluir nivel)
+     */
+    private function assignAreasEspecialidad($docenteId, $areaIds) {
+        $sql = "INSERT INTO docente_area_especialidad (docente_id, area_id, nivel, anios_experiencia) 
+                VALUES (:docente_id, :area_id, :nivel, :anios)";
+        $stmt = $this->pdo->prepare($sql);
+        
+        foreach ($areaIds as $area) {
+            // Puede venir como ID simple o como objeto con nivel
+            if (is_array($area)) {
+                $stmt->execute([
+                    ':docente_id' => $docenteId,
+                    ':area_id' => $area['id'],
+                    ':nivel' => $area['nivel'] ?? 'intermedio',
+                    ':anios' => $area['anios_experiencia'] ?? 0
+                ]);
+            } else {
+                $stmt->execute([
+                    ':docente_id' => $docenteId,
+                    ':area_id' => (int)$area,
+                    ':nivel' => 'intermedio',
+                    ':anios' => 0
+                ]);
+            }
+        }
+    }
+    
+    /**
+     * Obtener todas las áreas de especialidad disponibles
+     * 
+     * @return array Lista de áreas
+     */
+    public function getAreasEspecialidad() {
+        $sql = "
+            SELECT id, nombre, descripcion
+            FROM area_especialidad
+            WHERE activo = 1
+            ORDER BY nombre ASC
+        ";
+        
+        $stmt = $this->pdo->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Obtener áreas de especialidad de un docente con detalles
+     * 
+     * @param int $docenteId ID del docente
+     * @return array Áreas del docente con nivel y experiencia
+     */
+    public function getAreasDelDocente($docenteId) {
+        $sql = "
+            SELECT 
+                ae.id,
+                ae.nombre,
+                ae.descripcion,
+                dae.nivel,
+                dae.anios_experiencia,
+                dae.fecha_asignacion
+            FROM docente_area_especialidad dae
+            INNER JOIN area_especialidad ae ON dae.area_id = ae.id
+            WHERE dae.docente_id = :docente_id
+            ORDER BY ae.nombre ASC
+        ";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':docente_id' => $docenteId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
      * Obtener estadísticas de docentes
      * 
      * @return array Estadísticas
@@ -318,6 +419,26 @@ class Docente {
         ";
         
         $stmt = $this->pdo->query($sql);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Agregar estadísticas de áreas
+        $sqlAreas = "
+            SELECT 
+                ae.nombre as area,
+                COUNT(dae.docente_id) as docentes
+            FROM area_especialidad ae
+            LEFT JOIN docente_area_especialidad dae ON ae.id = dae.area_id
+            LEFT JOIN docente d ON dae.docente_id = d.id AND d.estatus = 'activo'
+            WHERE ae.activo = 1
+            GROUP BY ae.id, ae.nombre
+            HAVING docentes > 0
+            ORDER BY docentes DESC
+            LIMIT 10
+        ";
+        
+        $stmtAreas = $this->pdo->query($sqlAreas);
+        $stats['areas_top'] = $stmtAreas->fetchAll(PDO::FETCH_ASSOC);
+        
+        return $stats;
     }
 }

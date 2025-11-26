@@ -52,6 +52,7 @@
           <th>Estado</th>
           <th>SLA</th>
           <th>Asignado a</th>
+          <th>Evidencias</th>
           <th>Fecha</th>
           <th>Acciones</th>
         </tr>
@@ -74,6 +75,19 @@
           </td>
           <td>{{ incidencia.sla || 'N/A' }}</td>
           <td>{{ incidencia.asignado_nombre || 'N/A' }}</td>
+          <td class="evidencias-cell">
+            <div *ngIf="incidencia.evidencias" class="evidencias-list">
+              <a 
+                *ngFor="let filename of getEvidenciasArray(incidencia.evidencias)"
+                [href]="getEvidenciaUrl(incidencia.id!, filename)"
+                target="_blank"
+                class="evidencia-link"
+                [title]="filename">
+                {{ getFileIcon(filename) }}
+              </a>
+            </div>
+            <span *ngIf="!incidencia.evidencias" class="no-evidencias">—</span>
+          </td>
           <td>{{ incidencia.fecha_creacion ? formatDate(incidencia.fecha_creacion) : 'N/A' }}</td>
           <td class="actions">
             <button (click)="openForm(incidencia)" class="btn-edit">Editar</button>
@@ -81,7 +95,7 @@
           </td>
         </tr>
         <tr *ngIf="incidencias.length === 0">
-          <td colspan="10" class="no-data">No se encontraron incidencias</td>
+          <td colspan="11" class="no-data">No se encontraron incidencias</td>
         </tr>
       </tbody>
     </table>
@@ -153,11 +167,45 @@
         </div>
         <div class="form-group">
           <label>Evidencias</label>
-          <input 
-            type="text" 
-            [(ngModel)]="formData.evidencias" 
-            name="evidencias"
-            placeholder="Nombre del archivo">
+          <div class="file-upload-section">
+            <!-- Input para subir archivo -->
+            <div class="file-input-wrapper">
+              <input 
+                type="file" 
+                id="fileInput"
+                (change)="onFileSelected($event)"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt">
+              <button 
+                type="button" 
+                class="btn-upload" 
+                (click)="uploadFile()"
+                [disabled]="!selectedFile || uploading">
+                {{ uploading ? 'Subiendo...' : 'Subir Archivo' }}
+              </button>
+            </div>
+            <small class="file-hint">Formatos: PDF, Word, Excel, imágenes. Máx: 10MB</small>
+            
+            <!-- Lista de archivos subidos -->
+            <div *ngIf="uploadedFiles.length > 0" class="uploaded-files">
+              <div *ngFor="let file of uploadedFiles" class="file-item">
+                <span class="file-icon">{{ getFileIcon(file.filename) }}</span>
+                <a [href]="getFileUrl(file)" target="_blank" class="file-name">
+                  {{ file.filename }}
+                </a>
+                <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                <button 
+                  type="button" 
+                  class="btn-delete-file" 
+                  (click)="deleteFile(file)"
+                  title="Eliminar archivo">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div *ngIf="uploadedFiles.length === 0 && editingIncidencia" class="no-files">
+              No hay archivos adjuntos
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label>Estado</label>

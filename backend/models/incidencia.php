@@ -210,7 +210,9 @@ class Incidencia {
         
         if (isset($data['evidencias'])) {
             $updates[] = "evidencias = :evidencias";
-            $params[':evidencias'] = $data['evidencias'];
+            // Convertir string vacío a null
+            $evidencias = trim($data['evidencias'] ?? '');
+            $params[':evidencias'] = $evidencias !== '' ? $evidencias : null;
         }
         
         if (isset($data['status'])) {

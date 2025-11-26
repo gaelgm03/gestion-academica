@@ -22,6 +22,10 @@
       <option value="1">Con SNI</option>
       <option value="0">Sin SNI</option>
     </select>
+    <select [(ngModel)]="filters.area_id" class="filter-select">
+      <option value="">Todas las áreas</option>
+      <option *ngFor="let area of areasEspecialidad" [value]="area.id">{{ area.nombre }}</option>
+    </select>
     <button (click)="applyFilters()" class="btn-secondary">Filtrar</button>
     <button (click)="clearFilters()" class="btn-secondary">Limpiar</button>
   </div>
@@ -50,6 +54,7 @@
           <th>SNI</th>
           <th>Estatus</th>
           <th>Academias</th>
+          <th>Áreas de Especialidad</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -71,13 +76,18 @@
             </span>
           </td>
           <td>{{ docente.academias || 'N/A' }}</td>
+          <td>
+            <span class="areas-list" [title]="docente.areas_especialidad || 'Sin áreas'">
+              {{ docente.areas_especialidad || 'N/A' }}
+            </span>
+          </td>
           <td class="actions">
             <button (click)="openForm(docente)" class="btn-edit">Editar</button>
             <button (click)="deleteDocente(docente.id!)" class="btn-delete">Eliminar</button>
           </td>
         </tr>
         <tr *ngIf="docentes.length === 0">
-          <td colspan="9" class="no-data">No se encontraron docentes</td>
+          <td colspan="10" class="no-data">No se encontraron docentes</td>
         </tr>
       </tbody>
     </table>
@@ -148,6 +158,23 @@
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>Áreas de Especialidad</label>
+          <div class="areas-selector">
+            <div *ngFor="let area of areasEspecialidad" class="area-checkbox">
+              <label>
+                <input 
+                  type="checkbox" 
+                  [checked]="isAreaSelected(area.id)"
+                  (change)="toggleArea(area.id)">
+                {{ area.nombre }}
+              </label>
+            </div>
+          </div>
+          <div *ngIf="selectedAreaIds.length > 0" class="selected-areas">
+            <small>Seleccionadas: {{ selectedAreaIds.length }} área(s)</small>
+          </div>
         </div>
         <div class="form-actions">
           <button type="button" (click)="closeForm()" class="btn-secondary">Cancelar</button>

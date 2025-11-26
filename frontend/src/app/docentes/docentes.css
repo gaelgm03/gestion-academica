@@ -277,3 +277,60 @@ h1 {
   margin-top: 24px;
 }
 
+/* Áreas de Especialidad */
+.areas-selector {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  background-color: #fafafa;
+}
+
+.area-checkbox {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.area-checkbox:last-child {
+  border-bottom: none;
+}
+
+.area-checkbox label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+.area-checkbox input[type="checkbox"] {
+  margin-right: 10px;
+  width: 16px;
+  height: 16px;
+}
+
+.selected-areas {
+  margin-top: 8px;
+  color: #1976d2;
+  font-style: italic;
+}
+
+.areas-list {
+  display: inline-block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+}
+
+/* Responsive para tabla */
+@media (max-width: 1200px) {
+  .docentes-table th:nth-child(8),
+  .docentes-table td:nth-child(8),
+  .docentes-table th:nth-child(9),
+  .docentes-table td:nth-child(9) {
+    display: none;
+  }
+}

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Docente } from '../services/api.service';
+import { ApiService, Docente, AreaEspecialidad } from '../services/api.service';
 
 @Component({
   selector: 'app-docentes',
@@ -11,6 +11,7 @@ import { ApiService, Docente } from '../services/api.service';
 })
 export class Docentes implements OnInit {
   docentes: Docente[] = [];
+  areasEspecialidad: AreaEspecialidad[] = [];
   loading = true;
   error: string | null = null;
   showForm = false;
@@ -22,12 +23,15 @@ export class Docentes implements OnInit {
     idioma: '',
     sni: false,
     cvlink: '',
-    estatus: 'activo'
+    estatus: 'activo',
+    area_ids: []
   };
+  selectedAreaIds: number[] = [];
 
   filters = {
     estatus: '',
     sni: '',
+    area_id: '',
     search: ''
   };
 
@@ -35,6 +39,20 @@ export class Docentes implements OnInit {
 
   ngOnInit() {
     this.loadDocentes();
+    this.loadAreasEspecialidad();
+  }
+
+  loadAreasEspecialidad() {
+    this.apiService.getAreasEspecialidad().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.areasEspecialidad = response.data;
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar áreas:', err);
+      }
+    });
   }
 
   loadDocentes() {
@@ -44,6 +62,7 @@ export class Docentes implements OnInit {
     const filters: any = {};
     if (this.filters.estatus) filters.estatus = this.filters.estatus;
     if (this.filters.sni !== '') filters.sni = this.filters.sni;
+    if (this.filters.area_id) filters.area_id = this.filters.area_id;
     if (this.filters.search) filters.search = this.filters.search;
 
     this.apiService.getDocentes(filters).subscribe({
@@ -66,6 +85,14 @@ export class Docentes implements OnInit {
     if (docente) {
       this.editingDocente = docente;
       this.formData = { ...docente };
+      // Parsear area_ids si viene como string
+      if (docente.area_ids) {
+        this.selectedAreaIds = Array.isArray(docente.area_ids) 
+          ? docente.area_ids 
+          : String(docente.area_ids).split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+      } else {
+        this.selectedAreaIds = [];
+      }
     } else {
       this.editingDocente = null;
       this.formData = {
@@ -75,8 +102,10 @@ export class Docentes implements OnInit {
         idioma: '',
         sni: false,
         cvlink: '',
-        estatus: 'activo'
+        estatus: 'activo',
+        area_ids: []
       };
+      this.selectedAreaIds = [];
     }
     this.showForm = true;
   }
@@ -84,6 +113,7 @@ export class Docentes implements OnInit {
   closeForm() {
     this.showForm = false;
     this.editingDocente = null;
+    this.selectedAreaIds = [];
     this.formData = {
       nombre: '',
       email: '',
@@ -91,8 +121,27 @@ export class Docentes implements OnInit {
       idioma: '',
       sni: false,
       cvlink: '',
-      estatus: 'activo'
+      estatus: 'activo',
+      area_ids: []
     };
+  }
+
+  toggleArea(areaId: number) {
+    const index = this.selectedAreaIds.indexOf(areaId);
+    if (index > -1) {
+      this.selectedAreaIds.splice(index, 1);
+    } else {
+      this.selectedAreaIds.push(areaId);
+    }
+  }
+
+  isAreaSelected(areaId: number): boolean {
+    return this.selectedAreaIds.includes(areaId);
+  }
+
+  getAreaNombre(areaId: number): string {
+    const area = this.areasEspecialidad.find(a => a.id === areaId);
+    return area ? area.nombre : '';
   }
 
   saveDocente() {
@@ -101,9 +150,15 @@ export class Docentes implements OnInit {
       return;
     }
 
+    // Agregar áreas seleccionadas al formData
+    const dataToSave = {
+      ...this.formData,
+      area_ids: this.selectedAreaIds
+    };
+
     if (this.editingDocente && this.editingDocente.id) {
       // Actualizar
-      this.apiService.updateDocente(this.editingDocente.id, this.formData).subscribe({
+      this.apiService.updateDocente(this.editingDocente.id, dataToSave).subscribe({
         next: (response) => {
           if (response.success) {
             alert('✓ Docente actualizado exitosamente');
@@ -120,7 +175,7 @@ export class Docentes implements OnInit {
       });
     } else {
       // Crear
-      this.apiService.createDocente(this.formData).subscribe({
+      this.apiService.createDocente(dataToSave).subscribe({
         next: (response) => {
           if (response.success) {
             alert('✓ Docente creado exitosamente');
@@ -165,6 +220,7 @@ export class Docentes implements OnInit {
     this.filters = {
       estatus: '',
       sni: '',
+      area_id: '',
       search: ''
     };
     this.loadDocentes();

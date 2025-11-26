@@ -290,3 +290,150 @@ h1 {
   margin-top: 24px;
 }
 
+/* Estilos para subida de archivos */
+.file-upload-section {
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #fafafa;
+}
+
+.file-input-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.file-input-wrapper input[type="file"] {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}
+
+.btn-upload {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-upload:hover:not(:disabled) {
+  background-color: #43a047;
+}
+
+.btn-upload:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.file-hint {
+  display: block;
+  margin-top: 8px;
+  color: #666;
+  font-size: 12px;
+}
+
+.uploaded-files {
+  margin-top: 16px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.file-item:last-child {
+  margin-bottom: 0;
+}
+
+.file-icon {
+  font-size: 20px;
+}
+
+.file-name {
+  flex: 1;
+  color: #1976d2;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.file-name:hover {
+  text-decoration: underline;
+}
+
+.file-size {
+  color: #888;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.btn-delete-file {
+  background: #ff5252;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.btn-delete-file:hover {
+  background: #f44336;
+}
+
+.no-files {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 12px;
+}
+
+/* Evidencias en la tabla */
+.evidencias-cell {
+  text-align: center;
+}
+
+.evidencias-list {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.evidencia-link {
+  display: inline-block;
+  font-size: 18px;
+  text-decoration: none;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.evidencia-link:hover {
+  background-color: #e3f2fd;
+}
+
+.no-evidencias {
+  color: #ccc;
+}
