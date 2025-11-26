@@ -437,3 +437,293 @@ h1 {
 .no-evidencias {
   color: #ccc;
 }
+
+/* ========== VALIDACIÓN DE FORMULARIOS ========== */
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+  border-color: #d32f2f;
+  background-color: #ffebee;
+}
+
+.form-group.has-error input:focus,
+.form-group.has-error select:focus,
+.form-group.has-error textarea:focus {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2);
+}
+
+.error-message {
+  display: block;
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.form-group.has-error label {
+  color: #d32f2f;
+}
+
+/* ========== BOTÓN VER ========== */
+.btn-view {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-view:hover {
+  background-color: #1565c0;
+}
+
+/* ========== MODAL DETALLE ========== */
+.detail-modal {
+  max-width: 650px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.detail-content {
+  padding: 0 20px;
+}
+
+.detail-badges-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.badge-large {
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-abierto {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-proceso {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-cerrado {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.prioridad-alta {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.prioridad-media {
+  background: #fff8e1;
+  color: #f57f17;
+}
+
+.prioridad-baja {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.detail-section {
+  padding: 20px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-section:last-child {
+  border-bottom: none;
+}
+
+.detail-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.detail-item {
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.detail-item label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.detail-item span {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.files-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.file-card:hover {
+  transform: translateX(4px);
+}
+
+.file-icon {
+  font-size: 24px;
+}
+
+.file-name {
+  flex: 1;
+  color: #333;
+  font-weight: 500;
+}
+
+.file-size {
+  color: #888;
+  font-size: 12px;
+}
+
+.no-areas {
+  color: #999;
+  font-style: italic;
+  padding: 16px;
+  text-align: center;
+}
+
+.loading-small {
+  color: #666;
+  font-style: italic;
+  padding: 16px;
+  text-align: center;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px;
+  border-top: 1px solid #eee;
+}
+
+/* ========== HISTORIAL ========== */
+.historial-section {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.historial-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.historial-item {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px;
+  border-left: 4px solid #1976d2;
+}
+
+.historial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.historial-accion {
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+}
+
+.historial-fecha {
+  font-size: 11px;
+  color: #888;
+}
+
+.historial-body {
+  margin-bottom: 8px;
+}
+
+.historial-campo {
+  font-size: 12px;
+  color: #666;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.historial-valores {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.valor-anterior {
+  background: #ffebee;
+  color: #c62828;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-decoration: line-through;
+}
+
+.valor-arrow {
+  color: #888;
+  font-weight: bold;
+}
+
+.valor-nuevo {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.historial-footer {
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+
+.historial-usuario {
+  font-size: 11px;
+  color: #666;
+}

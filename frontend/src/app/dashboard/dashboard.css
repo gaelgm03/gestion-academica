@@ -134,6 +134,92 @@ h1 {
   transform: translateY(0);
 }
 
+/* ========== GRÁFICAS ========== */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  transition: box-shadow 0.3s;
+}
+
+.chart-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.chart-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 200px;
+  margin-bottom: 16px;
+}
+
+.chart-wrapper.chart-tall {
+  height: 250px;
+}
+
+.chart-wide {
+  grid-column: span 2;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: #f5f5f5;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.legend-label {
+  color: #666;
+}
+
+.legend-value {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+@media (max-width: 768px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-wide {
+    grid-column: span 1;
+  }
+  
+  .chart-wrapper {
+    height: 180px;
+  }
+}
+
 .loading, .error {
   text-align: center;
   padding: 40px;
@@ -189,46 +275,3 @@ h1 {
   font-weight: bold;
   margin: 0;
 }
-
-.section {
-  background: white;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
-}
-
-.section h2 {
-  margin-top: 0;
-  color: #333;
-  font-size: 20px;
-  margin-bottom: 20px;
-}
-
-.chart-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.chart-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background-color: #f5f5f5;
-  border-radius: 6px;
-}
-
-.chart-item .label {
-  font-weight: 500;
-  color: #666;
-  text-transform: capitalize;
-}
-
-.chart-item .value {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1976d2;
-}
-

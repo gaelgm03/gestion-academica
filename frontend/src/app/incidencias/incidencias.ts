@@ -2,7 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Incidencia, Docente, TipoIncidencia, UploadedFile } from '../services/api.service';
+import { ApiService, Incidencia, Docente, TipoIncidencia, UploadedFile, HistorialItem } from '../services/api.service';
 
 @Component({
   selector: 'app-incidencias',
@@ -19,6 +19,14 @@ export class Incidencias implements OnInit {
   showForm = false;
   editingIncidencia: Incidencia | null = null;
   
+  // Vista detalle
+  showDetail = false;
+  selectedIncidencia: Incidencia | null = null;
+  detailFiles: UploadedFile[] = [];
+  detailHistorial: HistorialItem[] = [];
+  loadingDetail = false;
+  loadingHistorial = false;
+  
   // Upload de archivos
   uploadedFiles: UploadedFile[] = [];
   uploading = false;
@@ -33,6 +41,11 @@ export class Incidencias implements OnInit {
     evidencias: '',
     status: 'abierto'
   };
+
+  // Validación de formulario
+  formErrors: { [key: string]: string } = {};
+  formTouched: { [key: string]: boolean } = {};
+  formSubmitted = false;
 
   filters = {
     status: '',
@@ -132,11 +145,61 @@ export class Incidencias implements OnInit {
       status: 'abierto'
     };
     this.editingIncidencia = null;
+    // Limpiar validaciones
+    this.formErrors = {};
+    this.formTouched = {};
+    this.formSubmitted = false;
+  }
+
+  // ========== VALIDACIÓN ==========
+  validateField(field: string): boolean {
+    this.formTouched[field] = true;
+    delete this.formErrors[field];
+
+    switch (field) {
+      case 'tipo_id':
+        if (!this.formData.tipo_id) {
+          this.formErrors[field] = 'Selecciona un tipo de incidencia';
+          return false;
+        }
+        break;
+      case 'curso':
+        if (!this.formData.curso || this.formData.curso.trim().length < 2) {
+          this.formErrors[field] = 'El curso debe tener al menos 2 caracteres';
+          return false;
+        }
+        break;
+      case 'prioridad':
+        if (!this.formData.prioridad) {
+          this.formErrors[field] = 'Selecciona una prioridad';
+          return false;
+        }
+        break;
+    }
+    return true;
+  }
+
+  validateForm(): boolean {
+    this.formSubmitted = true;
+    let isValid = true;
+
+    if (!this.validateField('tipo_id')) isValid = false;
+    if (!this.validateField('curso')) isValid = false;
+    if (!this.validateField('prioridad')) isValid = false;
+
+    return isValid;
+  }
+
+  hasError(field: string): boolean {
+    return !!(this.formErrors[field] && (this.formTouched[field] || this.formSubmitted));
+  }
+
+  getError(field: string): string {
+    return this.formErrors[field] || '';
   }
 
   saveIncidencia() {
-    if (!this.formData.tipo_id) {
-      alert('El tipo de incidencia es requerido');
+    if (!this.validateForm()) {
       return;
     }
 
@@ -319,7 +382,6 @@ export class Incidencias implements OnInit {
     
     this.apiService.deleteFile(file.filename, incidenciaId).subscribe({
       next: (response) => {
-        console.log('Delete response:', response);
         if (response.success) {
           this.uploadedFiles = this.uploadedFiles.filter(f => f.filename !== file.filename);
           // Actualizar también el formData.evidencias
@@ -329,13 +391,11 @@ export class Incidencias implements OnInit {
           }
           // Refrescar lista de incidencias para actualizar iconos en la tabla
           this.loadIncidencias();
-          alert('Archivo eliminado. DB updated: ' + response.data?.db_updated);
         } else {
           alert('Error: ' + response.message);
         }
       },
       error: (err) => {
-        console.error('Delete error:', err);
         alert('Error al eliminar: ' + (err.error?.message || err.message));
       }
     });
@@ -374,5 +434,99 @@ export class Incidencias implements OnInit {
 
   getEvidenciaUrl(incidenciaId: number, filename: string): string {
     return this.apiService.getDownloadUrl(incidenciaId, filename);
+  }
+
+  // ========== VISTA DETALLE ==========
+  openDetail(incidencia: Incidencia) {
+    this.selectedIncidencia = incidencia;
+    this.showDetail = true;
+    if (incidencia.id) {
+      this.loadDetailFiles(incidencia.id);
+      this.loadDetailHistorial(incidencia.id);
+    }
+  }
+
+  closeDetail() {
+    this.showDetail = false;
+    this.selectedIncidencia = null;
+    this.detailFiles = [];
+    this.detailHistorial = [];
+  }
+
+  loadDetailFiles(incidenciaId: number) {
+    this.loadingDetail = true;
+    this.apiService.getIncidenciaFiles(incidenciaId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.detailFiles = response.data.files;
+        }
+        this.loadingDetail = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar archivos:', err);
+        this.loadingDetail = false;
+      }
+    });
+  }
+
+  loadDetailHistorial(incidenciaId: number) {
+    this.loadingHistorial = true;
+    this.apiService.getIncidenciaHistorial(incidenciaId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.detailHistorial = response.data;
+        }
+        this.loadingHistorial = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar historial:', err);
+        this.loadingHistorial = false;
+      }
+    });
+  }
+
+  formatAccion(accion: string): string {
+    const acciones: { [key: string]: string } = {
+      'crear': '🆕 Creación',
+      'editar': '✏️ Edición',
+      'eliminar': '🗑️ Eliminación',
+      'cambio_status': '🔄 Cambio de Estado',
+      'asignar': '👤 Asignación'
+    };
+    return acciones[accion] || accion;
+  }
+
+  formatCampo(campo: string): string {
+    const campos: { [key: string]: string } = {
+      'tipo_id': 'Tipo',
+      'profesor': 'Profesor',
+      'curso': 'Curso',
+      'prioridad': 'Prioridad',
+      'sla': 'SLA',
+      'asignadoA': 'Asignado a',
+      'status': 'Estado',
+      'evidencias': 'Evidencias',
+      'incidencia': 'Incidencia'
+    };
+    return campos[campo] || campo;
+  }
+
+  editFromDetail() {
+    if (this.selectedIncidencia) {
+      this.closeDetail();
+      this.openForm(this.selectedIncidencia);
+    }
+  }
+
+  getProfesorNombreById(profesorId?: number): string {
+    if (!profesorId) return 'No asignado';
+    const docente = this.docentes.find(d => d.id === profesorId);
+    return docente?.nombre || 'Desconocido';
+  }
+
+  getAsignadoNombreById(asignadoId?: number): string {
+    if (!asignadoId) return 'Sin asignar';
+    const docente = this.docentes.find(d => d.id === asignadoId);
+    return docente?.nombre || 'Desconocido';
   }
 }

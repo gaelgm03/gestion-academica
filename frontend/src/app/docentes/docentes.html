@@ -82,6 +82,7 @@
             </span>
           </td>
           <td class="actions">
+            <button (click)="openDetail(docente)" class="btn-view">Ver</button>
             <button (click)="openForm(docente)" class="btn-edit">Editar</button>
             <button (click)="deleteDocente(docente.id!)" class="btn-delete">Eliminar</button>
           </td>
@@ -93,6 +94,77 @@
     </table>
   </div>
 
+  <!-- Modal Detalle Docente -->
+  <div *ngIf="showDetail && selectedDocente" class="modal-overlay" (click)="closeDetail()">
+    <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>👤 Detalle del Docente</h2>
+        <button (click)="closeDetail()" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="detail-content">
+        <!-- Información Principal -->
+        <div class="detail-section">
+          <div class="detail-avatar">
+            {{ selectedDocente.nombre?.charAt(0)?.toUpperCase() || '?' }}
+          </div>
+          <h3 class="detail-name">{{ selectedDocente.nombre }}</h3>
+          <p class="detail-email">{{ selectedDocente.email }}</p>
+          <div class="detail-badges">
+            <span [class]="selectedDocente.estatus === 'activo' ? 'badge-success' : 'badge-warning'">
+              {{ selectedDocente.estatus | titlecase }}
+            </span>
+            <span *ngIf="selectedDocente.sni" class="badge-sni">SNI</span>
+          </div>
+        </div>
+
+        <!-- Información Académica -->
+        <div class="detail-section">
+          <h4>📚 Información Académica</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Grados</label>
+              <span>{{ selectedDocente.grados || 'No especificado' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Idioma</label>
+              <span>{{ selectedDocente.idioma || 'No especificado' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Academias</label>
+              <span>{{ selectedDocente.academias || 'No asignadas' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedDocente.cvlink">
+              <label>CV Link</label>
+              <a [href]="selectedDocente.cvlink" target="_blank" class="cv-link">Ver CV →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Áreas de Especialidad -->
+        <div class="detail-section">
+          <h4>🎯 Áreas de Especialidad</h4>
+          <div *ngIf="loadingDetail" class="loading-small">Cargando áreas...</div>
+          <div *ngIf="!loadingDetail && docenteAreas.length === 0" class="no-areas">
+            No tiene áreas de especialidad asignadas
+          </div>
+          <div *ngIf="!loadingDetail && docenteAreas.length > 0" class="areas-grid">
+            <div *ngFor="let area of docenteAreas" class="area-card">
+              <span class="area-name">{{ area.nombre }}</span>
+              <span *ngIf="area.nivel" class="area-nivel">{{ area.nivel }}</span>
+              <span *ngIf="area.anios_experiencia" class="area-exp">{{ area.anios_experiencia }} años exp.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-actions">
+        <button (click)="editFromDetail()" class="btn-primary">✏️ Editar Docente</button>
+        <button (click)="closeDetail()" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Formulario Modal -->
   <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
     <div class="modal-content" (click)="$event.stopPropagation()">
@@ -101,23 +173,27 @@
         <button (click)="closeForm()" class="close-btn">&times;</button>
       </div>
       <form (ngSubmit)="saveDocente()" class="form">
-        <div class="form-group">
-          <label>Nombre Completo *</label>
+        <div class="form-group" [class.has-error]="hasError('nombre')">
+          <label>Nombre *</label>
           <input 
             type="text" 
             [(ngModel)]="formData.nombre" 
             name="nombre"
+            (blur)="validateField('nombre')"
             required
             placeholder="Ej: Juan Pérez García">
+          <span *ngIf="hasError('nombre')" class="error-message">{{ getError('nombre') }}</span>
         </div>
-        <div class="form-group">
+        <div class="form-group" [class.has-error]="hasError('email')">
           <label>Email *</label>
           <input 
             type="email" 
             [(ngModel)]="formData.email" 
             name="email"
+            (blur)="validateField('email')"
             required
             placeholder="Ej: juan.perez@up.edu.mx">
+          <span *ngIf="hasError('email')" class="error-message">{{ getError('email') }}</span>
         </div>
         <div class="form-group">
           <label>Grados Académicos</label>
@@ -144,13 +220,15 @@
             Miembro SNI
           </label>
         </div>
-        <div class="form-group">
+        <div class="form-group" [class.has-error]="hasError('cvlink')">
           <label>Link CV</label>
           <input 
             type="url" 
             [(ngModel)]="formData.cvlink" 
             name="cvlink"
+            (blur)="validateField('cvlink')"
             placeholder="https://cvup.mx/...">
+          <span *ngIf="hasError('cvlink')" class="error-message">{{ getError('cvlink') }}</span>
         </div>
         <div class="form-group">
           <label>Estatus</label>

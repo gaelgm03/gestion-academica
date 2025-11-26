@@ -23,6 +23,12 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/Incidencia.php';
 require_once __DIR__ . '/../auth/AuthMiddleware.php';
 
+// Cargar modelo de historial solo si existe el archivo
+$historialModelFile = __DIR__ . '/../models/incidencia_historial.php';
+if (file_exists($historialModelFile)) {
+    require_once $historialModelFile;
+}
+
 // Función helper para respuestas JSON
 function jsonResponse($success, $message, $data = null, $code = 200) {
     http_response_code($code);
@@ -38,8 +44,25 @@ function jsonResponse($success, $message, $data = null, $code = 200) {
 $auth = new AuthMiddleware($pdo);
 $auth->requireAuth(); // Requiere estar autenticado para acceder a este endpoint
 
-// Inicializar modelo
+// Obtener usuario actual para auditoría
+$currentUser = $auth->user;
+$currentUserId = $currentUser['id'] ?? 1;
+
+// Inicializar modelos
 $incidenciaModel = new Incidencia($pdo);
+
+// Verificar si la tabla de historial existe y la clase está disponible
+$historialModel = null;
+if (class_exists('IncidenciaHistorial')) {
+    try {
+        $stmt = $pdo->query("SHOW TABLES LIKE 'incidencia_historial'");
+        if ($stmt->rowCount() > 0) {
+            $historialModel = new IncidenciaHistorial($pdo);
+        }
+    } catch (Exception $e) {
+        // La tabla no existe, continuar sin historial
+    }
+}
 
 // Obtener método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
@@ -90,6 +113,25 @@ try {
                 $stats = $incidenciaModel->getStats();
                 jsonResponse(true, 'Estadísticas obtenidas', $stats);
                 
+            } elseif ($action === 'historial' && isset($_GET['incidencia_id'])) {
+                // Obtener historial de una incidencia
+                if (!$historialModel) {
+                    jsonResponse(true, 'Historial no disponible (tabla no creada)', []);
+                }
+                $incidenciaId = (int)$_GET['incidencia_id'];
+                $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
+                $historial = $historialModel->getHistorial($incidenciaId, $limit);
+                jsonResponse(true, 'Historial de incidencia', $historial);
+                
+            } elseif ($action === 'historial_reciente') {
+                // Obtener historial reciente del sistema
+                if (!$historialModel) {
+                    jsonResponse(true, 'Historial no disponible (tabla no creada)', []);
+                }
+                $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+                $historial = $historialModel->getHistorialReciente($limit);
+                jsonResponse(true, 'Historial reciente', $historial);
+                
             } elseif ($id) {
                 // Obtener una incidencia específica
                 $incidencia = $incidenciaModel->getById($id);
@@ -133,6 +175,16 @@ try {
             
             $incidenciaId = $incidenciaModel->create($data);
             $incidencia = $incidenciaModel->getById($incidenciaId);
+            
+            // Registrar en historial (si la tabla existe)
+            if ($historialModel) {
+                try {
+                    $historialModel->registrarCreacion($incidenciaId, $currentUserId, $data);
+                } catch (Exception $e) {
+                    error_log("Error al registrar historial de creación: " . $e->getMessage());
+                }
+            }
+            
             jsonResponse(true, 'Incidencia creada exitosamente', $incidencia, 201);
             break;
             
@@ -148,10 +200,26 @@ try {
                 jsonResponse(false, 'Datos inválidos', null, 400);
             }
             
+            // Obtener datos anteriores para comparar
+            $datosAnteriores = $incidenciaModel->getById($id);
+            
             $updated = $incidenciaModel->update($id, $data);
             
             if ($updated) {
                 $incidencia = $incidenciaModel->getById($id);
+                
+                // Registrar cambios en historial (si la tabla existe)
+                if ($historialModel) {
+                    try {
+                        $cambios = IncidenciaHistorial::detectarCambios($datosAnteriores, $data);
+                        if (!empty($cambios)) {
+                            $historialModel->registrarEdicion($id, $currentUserId, $cambios);
+                        }
+                    } catch (Exception $e) {
+                        error_log("Error al registrar historial de edición: " . $e->getMessage());
+                    }
+                }
+                
                 jsonResponse(true, 'Incidencia actualizada exitosamente', $incidencia);
             } else {
                 jsonResponse(false, 'No se pudo actualizar la incidencia', null, 400);
@@ -162,6 +230,18 @@ try {
             // Eliminar una incidencia
             if (!$id) {
                 jsonResponse(false, 'ID de incidencia requerido', null, 400);
+            }
+            
+            // Obtener datos antes de eliminar para el historial
+            $datosEliminados = $incidenciaModel->getById($id);
+            
+            // Registrar eliminación en historial (si la tabla existe)
+            if ($historialModel && $datosEliminados) {
+                try {
+                    $historialModel->registrarEliminacion($id, $currentUserId, $datosEliminados);
+                } catch (Exception $e) {
+                    error_log("Error al registrar historial de eliminación: " . $e->getMessage());
+                }
             }
             
             $deleted = $incidenciaModel->delete($id);

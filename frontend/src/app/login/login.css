@@ -140,3 +140,32 @@ code {
     font-size: 20px;
   }
 }
+
+/* ========== VALIDACIÓN DE FORMULARIOS ========== */
+.form-group.has-error .form-control {
+  border-color: #d32f2f;
+  background-color: #ffebee;
+}
+
+.form-group.has-error .form-control:focus {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
+}
+
+.error-message {
+  display: block;
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 6px;
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.form-group.has-error label {
+  color: #d32f2f;
+}

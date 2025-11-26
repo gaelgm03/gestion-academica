@@ -16,6 +16,12 @@ export class Docentes implements OnInit {
   error: string | null = null;
   showForm = false;
   editingDocente: Docente | null = null;
+  
+  // Vista detalle
+  showDetail = false;
+  selectedDocente: Docente | null = null;
+  docenteAreas: AreaEspecialidad[] = [];
+  loadingDetail = false;
   formData: Docente = {
     nombre: '',
     email: '',
@@ -27,6 +33,11 @@ export class Docentes implements OnInit {
     area_ids: []
   };
   selectedAreaIds: number[] = [];
+  
+  // Validación de formulario
+  formErrors: { [key: string]: string } = {};
+  formTouched: { [key: string]: boolean } = {};
+  formSubmitted = false;
 
   filters = {
     estatus: '',
@@ -124,6 +135,66 @@ export class Docentes implements OnInit {
       estatus: 'activo',
       area_ids: []
     };
+    // Limpiar validaciones
+    this.formErrors = {};
+    this.formTouched = {};
+    this.formSubmitted = false;
+  }
+
+  // ========== VALIDACIÓN ==========
+  validateField(field: string): boolean {
+    this.formTouched[field] = true;
+    delete this.formErrors[field];
+
+    switch (field) {
+      case 'nombre':
+        if (!this.formData.nombre || this.formData.nombre.trim().length < 3) {
+          this.formErrors[field] = 'El nombre debe tener al menos 3 caracteres';
+          return false;
+        }
+        break;
+      case 'email':
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!this.formData.email) {
+          this.formErrors[field] = 'El email es requerido';
+          return false;
+        }
+        if (!emailRegex.test(this.formData.email)) {
+          this.formErrors[field] = 'Ingresa un email válido';
+          return false;
+        }
+        break;
+      case 'cvlink':
+        if (this.formData.cvlink && this.formData.cvlink.trim()) {
+          const urlRegex = /^https?:\/\/.+/;
+          if (!urlRegex.test(this.formData.cvlink)) {
+            this.formErrors[field] = 'El link debe comenzar con http:// o https://';
+            return false;
+          }
+        }
+        break;
+    }
+    return true;
+  }
+
+  validateForm(): boolean {
+    this.formSubmitted = true;
+    let isValid = true;
+
+    // Validar campos requeridos
+    if (!this.validateField('nombre')) isValid = false;
+    if (!this.validateField('email')) isValid = false;
+    if (!this.validateField('cvlink')) isValid = false;
+
+    return isValid;
+  }
+
+  hasError(field: string): boolean {
+    return !!(this.formErrors[field] && (this.formTouched[field] || this.formSubmitted));
+  }
+
+  getError(field: string): string {
+    return this.formErrors[field] || '';
   }
 
   toggleArea(areaId: number) {
@@ -145,8 +216,8 @@ export class Docentes implements OnInit {
   }
 
   saveDocente() {
-    if (!this.formData.nombre || !this.formData.email) {
-      alert('Nombre y email son requeridos');
+    // Validar formulario antes de guardar
+    if (!this.validateForm()) {
       return;
     }
 
@@ -224,5 +295,41 @@ export class Docentes implements OnInit {
       search: ''
     };
     this.loadDocentes();
+  }
+
+  // ========== VISTA DETALLE ==========
+  openDetail(docente: Docente) {
+    this.selectedDocente = docente;
+    this.showDetail = true;
+    this.loadDocenteAreas(docente.id!);
+  }
+
+  closeDetail() {
+    this.showDetail = false;
+    this.selectedDocente = null;
+    this.docenteAreas = [];
+  }
+
+  loadDocenteAreas(docenteId: number) {
+    this.loadingDetail = true;
+    this.apiService.getAreasDelDocente(docenteId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.docenteAreas = response.data;
+        }
+        this.loadingDetail = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar áreas del docente:', err);
+        this.loadingDetail = false;
+      }
+    });
+  }
+
+  editFromDetail() {
+    if (this.selectedDocente) {
+      this.closeDetail();
+      this.openForm(this.selectedDocente);
+    }
   }
 }

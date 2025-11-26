@@ -6,32 +6,36 @@
     </div>
 
     <form (ngSubmit)="onSubmit()" class="login-form">
-      <div class="form-group">
+      <div class="form-group" [class.has-error]="hasError('email')">
         <label for="email">Email Institucional</label>
         <input
           type="email"
           id="email"
           name="email"
           [(ngModel)]="email"
+          (blur)="validateField('email')"
           placeholder="usuario@up.edu.mx"
           required
           [disabled]="loading"
           class="form-control"
         />
+        <span *ngIf="hasError('email')" class="error-message">{{ getError('email') }}</span>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" [class.has-error]="hasError('password')">
         <label for="password">Contraseña</label>
         <input
           type="password"
           id="password"
           name="password"
           [(ngModel)]="password"
+          (blur)="validateField('password')"
           placeholder="••••••••"
           required
           [disabled]="loading"
           class="form-control"
         />
+        <span *ngIf="hasError('password')" class="error-message">{{ getError('password') }}</span>
       </div>
 
       <div *ngIf="error" class="alert alert-danger">

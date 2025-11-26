@@ -44,6 +44,7 @@ export interface Incidencia {
   id?: number;
   tipo_id?: number;
   tipo?: string;
+  tipo_nombre?: string;
   profesor?: number;
   profesor_nombre?: string;
   profesor_email?: string;
@@ -64,6 +65,18 @@ export interface UploadedFile {
   mime_type?: string;
   path: string;
   modified?: string;
+}
+
+export interface HistorialItem {
+  id: number;
+  campo_modificado: string;
+  valor_anterior?: string;
+  valor_nuevo?: string;
+  accion: 'crear' | 'editar' | 'eliminar' | 'cambio_status' | 'asignar';
+  fecha_cambio: string;
+  ip_address?: string;
+  usuario_nombre: string;
+  usuario_email?: string;
 }
 
 export interface Periodo {
@@ -199,6 +212,12 @@ export class ApiService {
 
   getTiposIncidencia(): Observable<ApiResponse<TipoIncidencia[]>> {
     return this.http.get<ApiResponse<TipoIncidencia[]>>(`${API_URL}/api/incidencias.php?action=tipos`);
+  }
+
+  getIncidenciaHistorial(incidenciaId: number, limit: number = 50): Observable<ApiResponse<HistorialItem[]>> {
+    return this.http.get<ApiResponse<HistorialItem[]>>(
+      `${API_URL}/api/incidencias.php?action=historial&incidencia_id=${incidenciaId}&limit=${limit}`
+    );
   }
 
   // ========== REPORTES ==========

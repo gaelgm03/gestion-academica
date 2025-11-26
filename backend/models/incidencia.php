@@ -310,14 +310,39 @@ class Incidencia {
      * @return array Lista de tipos de incidencia
      */
     public function getTipos() {
-        $sql = "
-            SELECT id, nombre, descripcion
-            FROM tipo_incidencia
-            WHERE activo = 1
-            ORDER BY orden ASC, nombre ASC
-        ";
-        
-        $stmt = $this->pdo->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            // Intentar con todas las columnas
+            $sql = "
+                SELECT id, nombre, descripcion
+                FROM tipo_incidencia
+                WHERE activo = 1
+                ORDER BY orden ASC, nombre ASC
+            ";
+            $stmt = $this->pdo->query($sql);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Si falla, intentar sin WHERE activo
+            try {
+                $sql = "SELECT id, nombre, descripcion FROM tipo_incidencia ORDER BY nombre ASC";
+                $stmt = $this->pdo->query($sql);
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (PDOException $e2) {
+                // Si falla, intentar solo id y nombre
+                try {
+                    $sql = "SELECT id, nombre FROM tipo_incidencia ORDER BY id ASC";
+                    $stmt = $this->pdo->query($sql);
+                    $tipos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    // Agregar descripcion vacía para compatibilidad
+                    return array_map(function($t) {
+                        $t['descripcion'] = '';
+                        return $t;
+                    }, $tipos);
+                } catch (PDOException $e3) {
+                    // Si la tabla no existe, devolver array vacío
+                    error_log("Error al obtener tipos de incidencia: " . $e3->getMessage());
+                    return [];
+                }
+            }
+        }
     }
 }

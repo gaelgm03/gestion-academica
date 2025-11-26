@@ -90,6 +90,7 @@
           </td>
           <td>{{ incidencia.fecha_creacion ? formatDate(incidencia.fecha_creacion) : 'N/A' }}</td>
           <td class="actions">
+            <button (click)="openDetail(incidencia)" class="btn-view">Ver</button>
             <button (click)="openForm(incidencia)" class="btn-edit">Editar</button>
             <button (click)="deleteIncidencia(incidencia.id!)" class="btn-delete">Eliminar</button>
           </td>
@@ -101,6 +102,118 @@
     </table>
   </div>
 
+  <!-- Modal Detalle Incidencia -->
+  <div *ngIf="showDetail && selectedIncidencia" class="modal-overlay" (click)="closeDetail()">
+    <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📋 Detalle de Incidencia #{{ selectedIncidencia.id }}</h2>
+        <button (click)="closeDetail()" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="detail-content">
+        <!-- Status y Prioridad -->
+        <div class="detail-badges-row">
+          <span [class]="'badge-large ' + getStatusClass(selectedIncidencia.status || '')">
+            {{ selectedIncidencia.status | titlecase }}
+          </span>
+          <span [class]="'badge-large ' + getPrioridadClass(selectedIncidencia.prioridad)">
+            Prioridad: {{ selectedIncidencia.prioridad }}
+          </span>
+        </div>
+
+        <!-- Información Principal -->
+        <div class="detail-section">
+          <h4>📝 Información General</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Tipo de Incidencia</label>
+              <span>{{ selectedIncidencia.tipo_nombre || selectedIncidencia.tipo || 'No especificado' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Curso</label>
+              <span>{{ selectedIncidencia.curso || 'No especificado' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>SLA</label>
+              <span>{{ selectedIncidencia.sla || 'No definido' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Fecha de Creación</label>
+              <span>{{ selectedIncidencia.fecha_creacion ? formatDate(selectedIncidencia.fecha_creacion) : 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personas Involucradas -->
+        <div class="detail-section">
+          <h4>👥 Personas Involucradas</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Profesor</label>
+              <span>{{ selectedIncidencia.profesor_nombre || getProfesorNombreById(selectedIncidencia.profesor) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Asignado a</label>
+              <span>{{ selectedIncidencia.asignado_nombre || getAsignadoNombreById(selectedIncidencia.asignadoA) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evidencias -->
+        <div class="detail-section">
+          <h4>📎 Evidencias Adjuntas</h4>
+          <div *ngIf="loadingDetail" class="loading-small">Cargando archivos...</div>
+          <div *ngIf="!loadingDetail && detailFiles.length === 0" class="no-areas">
+            No hay evidencias adjuntas
+          </div>
+          <div *ngIf="!loadingDetail && detailFiles.length > 0" class="files-grid">
+            <a *ngFor="let file of detailFiles" 
+               [href]="getEvidenciaUrl(selectedIncidencia.id!, file.filename)"
+               target="_blank"
+               class="file-card">
+              <span class="file-icon">{{ getFileIcon(file.filename) }}</span>
+              <span class="file-name">{{ file.filename }}</span>
+              <span class="file-size">{{ formatFileSize(file.size) }}</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Historial de Cambios -->
+        <div class="detail-section historial-section">
+          <h4>📜 Historial de Cambios</h4>
+          <div *ngIf="loadingHistorial" class="loading-small">Cargando historial...</div>
+          <div *ngIf="!loadingHistorial && detailHistorial.length === 0" class="no-areas">
+            No hay registros de cambios
+          </div>
+          <div *ngIf="!loadingHistorial && detailHistorial.length > 0" class="historial-list">
+            <div *ngFor="let item of detailHistorial" class="historial-item">
+              <div class="historial-header">
+                <span class="historial-accion">{{ formatAccion(item.accion) }}</span>
+                <span class="historial-fecha">{{ item.fecha_cambio | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="historial-body">
+                <span class="historial-campo">{{ formatCampo(item.campo_modificado) }}</span>
+                <div class="historial-valores" *ngIf="item.valor_anterior || item.valor_nuevo">
+                  <span *ngIf="item.valor_anterior" class="valor-anterior">{{ item.valor_anterior }}</span>
+                  <span *ngIf="item.valor_anterior && item.valor_nuevo" class="valor-arrow">→</span>
+                  <span *ngIf="item.valor_nuevo" class="valor-nuevo">{{ item.valor_nuevo }}</span>
+                </div>
+              </div>
+              <div class="historial-footer">
+                <span class="historial-usuario">👤 {{ item.usuario_nombre }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-actions">
+        <button (click)="editFromDetail()" class="btn-primary">✏️ Editar Incidencia</button>
+        <button (click)="closeDetail()" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Formulario Modal -->
   <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
     <div class="modal-content" (click)="$event.stopPropagation()">
@@ -109,18 +222,20 @@
         <button (click)="closeForm()" class="close-btn">&times;</button>
       </div>
       <form (ngSubmit)="saveIncidencia()" class="form">
-        <div class="form-group">
+        <div class="form-group" [class.has-error]="hasError('tipo_id')">
           <label>Tipo de Incidencia *</label>
           <select 
             [(ngModel)]="formData.tipo_id" 
             name="tipo_id"
+            (change)="validateField('tipo_id')"
             required>
             <option [value]="undefined">Seleccionar tipo</option>
             <option *ngFor="let tipo of tiposIncidencia" [value]="tipo.id">
               {{ tipo.nombre }}
             </option>
           </select>
-          <small *ngIf="formData.tipo_id" style="color: #666; font-style: italic;">
+          <span *ngIf="hasError('tipo_id')" class="error-message">{{ getError('tipo_id') }}</span>
+          <small *ngIf="formData.tipo_id && !hasError('tipo_id')" style="color: #666; font-style: italic;">
             {{ getTipoDescripcion() }}
           </small>
         </div>
@@ -133,21 +248,24 @@
             </option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Curso</label>
+        <div class="form-group" [class.has-error]="hasError('curso')">
+          <label>Curso *</label>
           <input 
             type="text" 
             [(ngModel)]="formData.curso" 
             name="curso"
+            (blur)="validateField('curso')"
             placeholder="Ej: Cálculo Integral">
+          <span *ngIf="hasError('curso')" class="error-message">{{ getError('curso') }}</span>
         </div>
-        <div class="form-group">
-          <label>Prioridad</label>
-          <select [(ngModel)]="formData.prioridad" name="prioridad">
+        <div class="form-group" [class.has-error]="hasError('prioridad')">
+          <label>Prioridad *</label>
+          <select [(ngModel)]="formData.prioridad" name="prioridad" (change)="validateField('prioridad')">
             <option value="Alta">Alta</option>
             <option value="Media">Media</option>
             <option value="Baja">Baja</option>
           </select>
+          <span *ngIf="hasError('prioridad')" class="error-message">{{ getError('prioridad') }}</span>
         </div>
         <div class="form-group">
           <label>SLA</label>
