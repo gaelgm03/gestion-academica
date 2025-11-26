@@ -15,8 +15,8 @@
 [Características](#-características) •
 [Demo](#-demo) •
 [Instalación](#-instalación-rápida) •
-[Documentación](#-documentación) •
-[Contribuir](#-contribuir)
+[Stack](#%EF%B8%8F-stack-tecnológico) •
+[Equipo](#-equipo-de-desarrollo)
 
 </div>
 
@@ -214,35 +214,23 @@ El sistema cuenta con **19 tablas** organizadas en módulos:
 
 ---
 
-## 🤝 Contribuir
+## 👨‍💻 Equipo de Desarrollo
 
-¡Las contribuciones son bienvenidas! 
+<div align="center">
 
-1. Fork el proyecto
-2. Crea tu rama (`git checkout -b feature/NuevaCaracteristica`)
-3. Commit tus cambios (`git commit -m 'Add: nueva característica'`)
-4. Push a la rama (`git push origin feature/NuevaCaracteristica`)
-5. Abre un Pull Request
+| Frontend | Backend | Base de Datos |
+|:--------:|:-------:|:-------------:|
+| [![GitHub](https://img.shields.io/badge/-@gaelgm03-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/gaelgm03) | [![GitHub](https://img.shields.io/badge/-@RogelioNava-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/RogelioNava) | [![GitHub](https://img.shields.io/badge/-@antonioannese-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/antonioannese) |
+| **Gael Guzmán** | **Rogelio Nava** | **Antonio Annese** |
+| Angular, TypeScript | PHP, REST API, JWT | MySQL, Schema Design |
+
+</div>
 
 ---
 
 ## 📝 Licencia
 
 Distribuido bajo la Licencia MIT. Ver [`LICENSE`](LICENSE) para más información.
-
----
-
-## 👨‍💻 Autor
-
-<div align="center">
-
-[![GitHub](https://img.shields.io/badge/-@gaelgm03-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/gaelgm03)
-
-**Gael Guzmán**
-
-*Full Stack Developer*
-
-</div>
 
 ---
 
