@@ -1,0 +1,162 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.navbar-menu {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 8px;
+}
+
+.navbar-menu li {
+  margin: 0;
+}
+
+.navbar-menu a {
+  display: block;
+  padding: 8px 16px;
+  text-decoration: none;
+  color: #666;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.navbar-menu a:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.navbar-menu a.active {
+  background-color: #667eea;
+  color: white;
+}
+
+.navbar-user {
+  position: relative;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.user-info:hover {
+  background-color: #f5f5f5;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #666;
+  text-transform: capitalize;
+}
+
+.dropdown-icon {
+  color: #999;
+}
+
+.user-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  padding: 8px 0;
+  z-index: 1001;
+}
+
+.menu-item {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #333;
+}
+
+.menu-action {
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.menu-action:hover {
+  background-color: #f5f5f5;
+  color: #667eea;
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: #eee;
+  margin: 8px 0;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 16px;
+  }
+
+  .navbar-menu {
+    display: none;
+  }
+
+  .user-details {
+    display: none;
+  }
+}

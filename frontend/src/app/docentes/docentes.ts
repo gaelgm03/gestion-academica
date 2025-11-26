@@ -58,7 +58,6 @@ export class Docentes implements OnInit {
       error: (err) => {
         this.error = 'Error al cargar docentes: ' + (err.message || 'Error desconocido');
         this.loading = false;
-        console.error('Error:', err);
       }
     });
   }
@@ -108,7 +107,6 @@ export class Docentes implements OnInit {
         next: (response) => {
           if (response.success) {
             alert('✓ Docente actualizado exitosamente');
-            console.log('Docente actualizado:', response.data);
             this.loadDocentes();
             this.closeForm();
           } else {
@@ -118,7 +116,6 @@ export class Docentes implements OnInit {
         error: (err) => {
           const errorMsg = err.error?.message || err.message || 'Error desconocido';
           alert('Error al actualizar: ' + errorMsg);
-          console.error('Error:', err);
         }
       });
     } else {
@@ -127,7 +124,6 @@ export class Docentes implements OnInit {
         next: (response) => {
           if (response.success) {
             alert('✓ Docente creado exitosamente');
-            console.log('Docente creado:', response.data);
             this.loadDocentes();
             this.closeForm();
           } else {
@@ -137,7 +133,6 @@ export class Docentes implements OnInit {
         error: (err) => {
           const errorMsg = err.error?.message || err.message || 'Error desconocido';
           alert('Error al crear: ' + errorMsg);
-          console.error('Error:', err);
         }
       });
     }
@@ -149,7 +144,6 @@ export class Docentes implements OnInit {
         next: (response) => {
           if (response.success) {
             alert('✓ Docente eliminado exitosamente');
-            console.log('Docente eliminado');
             this.loadDocentes();
           } else {
             alert('Error: ' + response.message);
@@ -158,7 +152,6 @@ export class Docentes implements OnInit {
         error: (err) => {
           const errorMsg = err.error?.message || err.message || 'Error desconocido';
           alert('Error al eliminar: ' + errorMsg);
-          console.error('Error:', err);
         }
       });
     }

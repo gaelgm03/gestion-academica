@@ -1,0 +1,59 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Sistema de Gestión Académica</h1>
+      <p>Universidad Panamericana</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="email">Email Institucional</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+          placeholder="usuario@up.edu.mx"
+          required
+          [disabled]="loading"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          placeholder="••••••••"
+          required
+          [disabled]="loading"
+          class="form-control"
+        />
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger">
+        <strong>Error:</strong> {{ error }}
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="loading"
+        class="btn btn-primary btn-block"
+      >
+        <span *ngIf="!loading">Iniciar Sesión</span>
+        <span *ngIf="loading">Iniciando sesión...</span>
+      </button>
+
+      <div class="login-help">
+        <p class="text-muted">
+          <small>
+            <strong>Modo de Prueba:</strong> Usa cualquier email @up.edu.mx con contraseña: <code>test123</code>
+          </small>
+        </p>
+      </div>
+    </form>
+  </div>
+</div>

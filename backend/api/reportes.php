@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Cargar dependencias
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/Reporte.php';
+require_once __DIR__ . '/../auth/AuthMiddleware.php';
 
 // Función helper para respuestas JSON
 function jsonResponse($success, $message, $data = null, $code = 200) {
@@ -32,6 +33,10 @@ function jsonResponse($success, $message, $data = null, $code = 200) {
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }
+
+// Inicializar autenticación
+$auth = new AuthMiddleware($pdo);
+$auth->requireAuth(); // Requiere estar autenticado para acceder a este endpoint
 
 // Inicializar modelo
 $reporteModel = new Reporte($pdo);

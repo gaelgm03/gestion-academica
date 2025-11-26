@@ -1,4 +1,3 @@
-
 * {
   box-sizing: border-box;
 }
@@ -19,43 +18,17 @@ body {
   flex-direction: column;
 }
 
-.app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px 40px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.app-header h1 {
-  margin: 0 0 16px 0;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.app-nav {
-  display: flex;
-  gap: 24px;
-}
-
-.app-nav a {
-  color: white;
-  text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-  font-weight: 500;
-}
-
-.app-nav a:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.app-nav a.active {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
 .app-main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main.with-navbar {
+  padding: 0;
+}
+
+.app-main:not(.with-navbar) {
   padding: 0;
 }
 

@@ -4,9 +4,17 @@
 # Habilitar reescritura de URLs
 RewriteEngine On
 
+# Permitir el header Authorization para JWT
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+
 # Reescritura de URLs para endpoints de API
 # Formato: /api/docentes -> /api/docentes.php
 # Formato: /api/docentes/123 -> /api/docentes.php (el ID se maneja en el PHP)
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/auth(/.*)?$ api/auth.php [QSA,L]
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

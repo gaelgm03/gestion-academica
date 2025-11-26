@@ -23,9 +23,16 @@ export interface Docente {
   academia_ids?: number[];
 }
 
+export interface TipoIncidencia {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+}
+
 export interface Incidencia {
   id?: number;
-  tipo: string;
+  tipo_id?: number;
+  tipo?: string;
   profesor?: number;
   profesor_nombre?: string;
   profesor_email?: string;
@@ -143,6 +150,10 @@ export class ApiService {
 
   getIncidenciasStats(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(`${API_URL}/api/incidencias.php?action=stats`);
+  }
+
+  getTiposIncidencia(): Observable<ApiResponse<TipoIncidencia[]>> {
+    return this.http.get<ApiResponse<TipoIncidencia[]>>(`${API_URL}/api/incidencias.php?action=tipos`);
   }
 
   // ========== REPORTES ==========

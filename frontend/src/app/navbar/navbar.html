@@ -1,0 +1,50 @@
+<nav class="navbar">
+  <div class="navbar-brand">
+    <a routerLink="/dashboard" class="brand-link">
+      <span class="brand-name">Gestión Académica</span>
+    </a>
+  </div>
+
+  <ul class="navbar-menu">
+    <li>
+      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        Dashboard
+      </a>
+    </li>
+    <li>
+      <a routerLink="/docentes" routerLinkActive="active">
+        Docentes
+      </a>
+    </li>
+    <li>
+      <a routerLink="/incidencias" routerLinkActive="active">
+        Incidencias
+      </a>
+    </li>
+  </ul>
+
+  <div class="navbar-user" *ngIf="currentUser">
+    <div class="user-info" (click)="toggleUserMenu()">
+      <div class="user-avatar">
+        {{ currentUser.nombre.charAt(0).toUpperCase() }}
+      </div>
+      <div class="user-details">
+        <div class="user-name">{{ currentUser.nombre }}</div>
+        <div class="user-role">{{ currentUser.rol_nombre }}</div>
+      </div>
+      <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 11L3 6h10l-5 5z"/>
+      </svg>
+    </div>
+
+    <div class="user-menu" *ngIf="showUserMenu">
+      <div class="menu-item">
+        <strong>{{ currentUser.email }}</strong>
+      </div>
+      <div class="menu-divider"></div>
+      <div class="menu-item menu-action" (click)="logout()">
+        Cerrar Sesión
+      </div>
+    </div>
+  </div>
+</nav>

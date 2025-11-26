@@ -16,14 +16,15 @@ class Incidencia {
     /**
      * Obtener todas las incidencias con filtros opcionales
      * 
-     * @param array $filters Filtros: status, prioridad, profesor, asignadoA, tipo, fecha_desde, fecha_hasta
+     * @param array $filters Filtros: status, prioridad, profesor, asignadoA, tipo_id, fecha_desde, fecha_hasta
      * @return array Lista de incidencias
      */
     public function getAll($filters = []) {
         $sql = "
             SELECT 
                 i.id,
-                i.tipo,
+                i.tipo_id,
+                ti.nombre as tipo,
                 i.profesor,
                 i.curso,
                 i.prioridad,
@@ -36,6 +37,7 @@ class Incidencia {
                 u_prof.email as profesor_email,
                 u_asig.nombre as asignado_nombre
             FROM incidencia i
+            INNER JOIN tipo_incidencia ti ON i.tipo_id = ti.id
             LEFT JOIN docente d ON i.profesor = d.id
             LEFT JOIN usuario u_prof ON d.id_usuario = u_prof.id
             LEFT JOIN usuario u_asig ON i.asignadoA = u_asig.id
@@ -68,9 +70,15 @@ class Incidencia {
             $params[':asignadoA'] = (int)$filters['asignadoA'];
         }
         
-        // Filtro por tipo
+        // Filtro por tipo (acepta tipo_id)
+        if (isset($filters['tipo_id']) && $filters['tipo_id'] !== '') {
+            $sql .= " AND i.tipo_id = :tipo_id";
+            $params[':tipo_id'] = (int)$filters['tipo_id'];
+        }
+        
+        // Filtro por nombre de tipo (búsqueda)
         if (isset($filters['tipo']) && $filters['tipo'] !== '') {
-            $sql .= " AND i.tipo LIKE :tipo";
+            $sql .= " AND ti.nombre LIKE :tipo";
             $params[':tipo'] = '%' . $filters['tipo'] . '%';
         }
         
@@ -104,7 +112,8 @@ class Incidencia {
         $sql = "
             SELECT 
                 i.id,
-                i.tipo,
+                i.tipo_id,
+                ti.nombre as tipo,
                 i.profesor,
                 i.curso,
                 i.prioridad,
@@ -117,6 +126,7 @@ class Incidencia {
                 u_prof.email as profesor_email,
                 u_asig.nombre as asignado_nombre
             FROM incidencia i
+            INNER JOIN tipo_incidencia ti ON i.tipo_id = ti.id
             LEFT JOIN docente d ON i.profesor = d.id
             LEFT JOIN usuario u_prof ON d.id_usuario = u_prof.id
             LEFT JOIN usuario u_asig ON i.asignadoA = u_asig.id
@@ -132,18 +142,18 @@ class Incidencia {
     /**
      * Crear una nueva incidencia
      * 
-     * @param array $data Datos de la incidencia
+     * @param array $data Datos de la incidencia (debe incluir tipo_id)
      * @return int ID de la incidencia creada
      */
     public function create($data) {
         $sql = "
-            INSERT INTO incidencia (tipo, profesor, curso, prioridad, sla, asignadoA, evidencias, status) 
-            VALUES (:tipo, :profesor, :curso, :prioridad, :sla, :asignadoA, :evidencias, :status)
+            INSERT INTO incidencia (tipo_id, profesor, curso, prioridad, sla, asignadoA, evidencias, status) 
+            VALUES (:tipo_id, :profesor, :curso, :prioridad, :sla, :asignadoA, :evidencias, :status)
         ";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            ':tipo' => $data['tipo'],
+            ':tipo_id' => $data['tipo_id'],
             ':profesor' => $data['profesor'] ?? null,
             ':curso' => $data['curso'] ?? '',
             ':prioridad' => $data['prioridad'] ?? 'Media',
@@ -168,9 +178,9 @@ class Incidencia {
         $params = [];
         $updates = [];
         
-        if (isset($data['tipo'])) {
-            $updates[] = "tipo = :tipo";
-            $params[':tipo'] = $data['tipo'];
+        if (isset($data['tipo_id'])) {
+            $updates[] = "tipo_id = :tipo_id";
+            $params[':tipo_id'] = (int)$data['tipo_id'];
         }
         
         if (isset($data['profesor'])) {
@@ -286,6 +296,23 @@ class Incidencia {
                     WHEN 'Media' THEN 2
                     WHEN 'Baja' THEN 3
                 END
+        ";
+        
+        $stmt = $this->pdo->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Obtener todos los tipos de incidencia disponibles
+     * 
+     * @return array Lista de tipos de incidencia
+     */
+    public function getTipos() {
+        $sql = "
+            SELECT id, nombre, descripcion
+            FROM tipo_incidencia
+            WHERE activo = 1
+            ORDER BY orden ASC, nombre ASC
         ";
         
         $stmt = $this->pdo->query($sql);

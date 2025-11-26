@@ -6,12 +6,12 @@
 
   <!-- Filtros -->
   <div class="filters">
-    <input 
-      type="text" 
-      placeholder="Buscar por tipo..." 
-      [(ngModel)]="filters.tipo"
-      (keyup.enter)="applyFilters()"
-      class="filter-input">
+    <select [(ngModel)]="filters.tipo_id" class="filter-select">
+      <option value="">Todos los tipos</option>
+      <option *ngFor="let tipo of tiposIncidencia" [value]="tipo.id">
+        {{ tipo.nombre }}
+      </option>
+    </select>
     <select [(ngModel)]="filters.status" class="filter-select">
       <option value="">Todos los estados</option>
       <option value="abierto">Abierto</option>
@@ -97,12 +97,18 @@
       <form (ngSubmit)="saveIncidencia()" class="form">
         <div class="form-group">
           <label>Tipo de Incidencia *</label>
-          <input 
-            type="text" 
-            [(ngModel)]="formData.tipo" 
-            name="tipo"
-            required
-            placeholder="Ej: Cambio de fecha de examen">
+          <select 
+            [(ngModel)]="formData.tipo_id" 
+            name="tipo_id"
+            required>
+            <option [value]="undefined">Seleccionar tipo</option>
+            <option *ngFor="let tipo of tiposIncidencia" [value]="tipo.id">
+              {{ tipo.nombre }}
+            </option>
+          </select>
+          <small *ngIf="formData.tipo_id" style="color: #666; font-style: italic;">
+            {{ getTipoDescripcion() }}
+          </small>
         </div>
         <div class="form-group">
           <label>Profesor</label>

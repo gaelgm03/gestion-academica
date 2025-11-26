@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Cargar dependencias
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/Incidencia.php';
+require_once __DIR__ . '/../auth/AuthMiddleware.php';
 
 // Función helper para respuestas JSON
 function jsonResponse($success, $message, $data = null, $code = 200) {
@@ -32,6 +33,10 @@ function jsonResponse($success, $message, $data = null, $code = 200) {
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }
+
+// Inicializar autenticación
+$auth = new AuthMiddleware($pdo);
+$auth->requireAuth(); // Requiere estar autenticado para acceder a este endpoint
 
 // Inicializar modelo
 $incidenciaModel = new Incidencia($pdo);
@@ -75,7 +80,12 @@ if ($id === null && $action === null) {
 try {
     switch ($method) {
         case 'GET':
-            if ($action === 'stats') {
+            if ($action === 'tipos') {
+                // Obtener catálogo de tipos de incidencia
+                $tipos = $incidenciaModel->getTipos();
+                jsonResponse(true, 'Tipos de incidencia obtenidos', $tipos);
+                
+            } elseif ($action === 'stats') {
                 // Obtener estadísticas
                 $stats = $incidenciaModel->getStats();
                 jsonResponse(true, 'Estadísticas obtenidas', $stats);
@@ -97,6 +107,7 @@ try {
                     'prioridad' => $_GET['prioridad'] ?? null,
                     'profesor' => $_GET['profesor'] ?? null,
                     'asignadoA' => $_GET['asignadoA'] ?? null,
+                    'tipo_id' => $_GET['tipo_id'] ?? null,
                     'tipo' => $_GET['tipo'] ?? null,
                     'fecha_desde' => $_GET['fecha_desde'] ?? null,
                     'fecha_hasta' => $_GET['fecha_hasta'] ?? null
@@ -116,8 +127,8 @@ try {
             }
             
             // Validar campos requeridos
-            if (empty($data['tipo'])) {
-                jsonResponse(false, 'El tipo de incidencia es requerido', null, 400);
+            if (empty($data['tipo_id'])) {
+                jsonResponse(false, 'El tipo de incidencia (tipo_id) es requerido', null, 400);
             }
             
             $incidenciaId = $incidenciaModel->create($data);

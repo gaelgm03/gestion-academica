@@ -2,7 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Incidencia, Docente } from '../services/api.service';
+import { ApiService, Incidencia, Docente, TipoIncidencia } from '../services/api.service';
 
 @Component({
   selector: 'app-incidencias',
@@ -13,12 +13,13 @@ import { ApiService, Incidencia, Docente } from '../services/api.service';
 export class Incidencias implements OnInit {
   incidencias: Incidencia[] = [];
   docentes: Docente[] = [];
+  tiposIncidencia: TipoIncidencia[] = [];
   loading = true;
   error: string | null = null;
   showForm = false;
   editingIncidencia: Incidencia | null = null;
   formData: Incidencia = {
-    tipo: '',
+    tipo_id: undefined,
     profesor: undefined,
     curso: '',
     prioridad: 'Media',
@@ -31,7 +32,7 @@ export class Incidencias implements OnInit {
   filters = {
     status: '',
     prioridad: '',
-    tipo: ''
+    tipo_id: ''
   };
 
   constructor(private apiService: ApiService) {}
@@ -39,6 +40,7 @@ export class Incidencias implements OnInit {
   ngOnInit() {
     this.loadIncidencias();
     this.loadDocentes();
+    this.loadTiposIncidencia();
   }
 
   loadIncidencias() {
@@ -48,7 +50,7 @@ export class Incidencias implements OnInit {
     const filters: any = {};
     if (this.filters.status) filters.status = this.filters.status;
     if (this.filters.prioridad) filters.prioridad = this.filters.prioridad;
-    if (this.filters.tipo) filters.tipo = this.filters.tipo;
+    if (this.filters.tipo_id) filters.tipo_id = this.filters.tipo_id;
 
     this.apiService.getIncidencias(filters).subscribe({
       next: (response) => {
@@ -62,7 +64,6 @@ export class Incidencias implements OnInit {
       error: (err) => {
         this.error = 'Error al cargar incidencias: ' + (err.message || 'Error desconocido');
         this.loading = false;
-        console.error('Error:', err);
       }
     });
   }
@@ -75,7 +76,20 @@ export class Incidencias implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al cargar docentes:', err);
+        // Error silenciado - los docentes son opcionales en el formulario
+      }
+    });
+  }
+
+  loadTiposIncidencia() {
+    this.apiService.getTiposIncidencia().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.tiposIncidencia = response.data;
+        }
+      },
+      error: (err) => {
+        // Error silenciado - los tipos se cargan de forma opcional
       }
     });
   }
@@ -85,17 +99,7 @@ export class Incidencias implements OnInit {
       this.editingIncidencia = incidencia;
       this.formData = { ...incidencia };
     } else {
-      this.editingIncidencia = null;
-      this.formData = {
-        tipo: '',
-        profesor: undefined,
-        curso: '',
-        prioridad: 'Media',
-        sla: '',
-        asignadoA: undefined,
-        evidencias: '',
-        status: 'abierto'
-      };
+      this.resetForm();
     }
     this.showForm = true;
   }
@@ -103,8 +107,12 @@ export class Incidencias implements OnInit {
   closeForm() {
     this.showForm = false;
     this.editingIncidencia = null;
+    this.resetForm();
+  }
+
+  resetForm() {
     this.formData = {
-      tipo: '',
+      tipo_id: undefined,
       profesor: undefined,
       curso: '',
       prioridad: 'Media',
@@ -113,10 +121,11 @@ export class Incidencias implements OnInit {
       evidencias: '',
       status: 'abierto'
     };
+    this.editingIncidencia = null;
   }
 
   saveIncidencia() {
-    if (!this.formData.tipo) {
+    if (!this.formData.tipo_id) {
       alert('El tipo de incidencia es requerido');
       return;
     }
@@ -127,7 +136,6 @@ export class Incidencias implements OnInit {
         next: (response) => {
           if (response.success) {
             alert('✓ Incidencia actualizada exitosamente');
-            console.log('Incidencia actualizada:', response.data);
             this.loadIncidencias();
             this.closeForm();
           } else {
@@ -137,7 +145,6 @@ export class Incidencias implements OnInit {
         error: (err) => {
           const errorMsg = err.error?.message || err.message || 'Error desconocido';
           alert('Error al actualizar: ' + errorMsg);
-          console.error('Error:', err);
         }
       });
     } else {
@@ -146,7 +153,6 @@ export class Incidencias implements OnInit {
         next: (response) => {
           if (response.success) {
             alert('✓ Incidencia creada exitosamente');
-            console.log('Incidencia creada:', response.data);
             this.loadIncidencias();
             this.closeForm();
           } else {
@@ -156,7 +162,6 @@ export class Incidencias implements OnInit {
         error: (err) => {
           const errorMsg = err.error?.message || err.message || 'Error desconocido';
           alert('Error al crear: ' + errorMsg);
-          console.error('Error:', err);
         }
       });
     }
@@ -168,7 +173,6 @@ export class Incidencias implements OnInit {
         next: (response) => {
           if (response.success) {
             alert('✓ Incidencia eliminada exitosamente');
-            console.log('Incidencia eliminada');
             this.loadIncidencias();
           } else {
             alert('Error: ' + response.message);
@@ -177,7 +181,6 @@ export class Incidencias implements OnInit {
         error: (err) => {
           const errorMsg = err.error?.message || err.message || 'Error desconocido';
           alert('Error al eliminar: ' + errorMsg);
-          console.error('Error:', err);
         }
       });
     }
@@ -191,7 +194,7 @@ export class Incidencias implements OnInit {
     this.filters = {
       status: '',
       prioridad: '',
-      tipo: ''
+      tipo_id: ''
     };
     this.loadIncidencias();
   }
@@ -224,5 +227,11 @@ export class Incidencias implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  getTipoDescripcion(): string {
+    if (!this.formData.tipo_id) return '';
+    const tipo = this.tiposIncidencia.find(t => t.id === this.formData.tipo_id);
+    return tipo?.descripcion || '';
   }
 }
