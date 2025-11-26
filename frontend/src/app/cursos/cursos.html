@@ -1,0 +1,361 @@
+<div class="cursos-container">
+  <div class="header">
+    <h1>📚 Gestión de Cursos</h1>
+    <div class="header-actions">
+      <button class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
+      <button (click)="openForm()" class="btn-primary">+ Nuevo Curso</button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters">
+    <input 
+      type="text" 
+      [(ngModel)]="filters.search" 
+      placeholder="Buscar por código o nombre..."
+      class="search-input"
+      (keyup.enter)="applyFilters()"
+    />
+    <select [(ngModel)]="filters.estatus" (change)="applyFilters()">
+      <option value="">Todos los estatus</option>
+      <option value="activo">Activo</option>
+      <option value="inactivo">Inactivo</option>
+    </select>
+    <select [(ngModel)]="filters.modalidad" (change)="applyFilters()">
+      <option value="">Todas las modalidades</option>
+      <option value="presencial">Presencial</option>
+      <option value="virtual">Virtual</option>
+      <option value="hibrido">Híbrido</option>
+    </select>
+    <select [(ngModel)]="filters.semestre" (change)="applyFilters()">
+      <option value="">Todos los semestres</option>
+      <option *ngFor="let s of [1,2,3,4,5,6,7,8,9,10]" [value]="s">Semestre {{ s }}</option>
+    </select>
+    <button (click)="clearFilters()" class="btn-secondary">Limpiar</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <span>Cargando cursos...</span>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <!-- Tabla de cursos -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="cursos-table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Créditos</th>
+          <th>Semestre</th>
+          <th>Modalidad</th>
+          <th>Academia</th>
+          <th>Docentes</th>
+          <th>Inscritos</th>
+          <th>Estatus</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let curso of cursos">
+          <td class="codigo">{{ curso.codigo }}</td>
+          <td>{{ curso.nombre }}</td>
+          <td class="center">{{ curso.creditos || 0 }}</td>
+          <td class="center">{{ curso.semestre || '-' }}</td>
+          <td>
+            <span [class]="'badge ' + getModalidadClass(curso.modalidad)">
+              {{ curso.modalidad | titlecase }}
+            </span>
+          </td>
+          <td>{{ curso.academia_nombre || 'N/A' }}</td>
+          <td class="center">{{ curso.docentes_asignados || 0 }}</td>
+          <td class="center">{{ curso.total_inscritos || 0 }}</td>
+          <td>
+            <span [class]="'badge ' + getEstatusClass(curso.estatus)">
+              {{ curso.estatus | titlecase }}
+            </span>
+          </td>
+          <td class="actions">
+            <button (click)="openDetail(curso)" class="btn-view">Ver</button>
+            <button (click)="openForm(curso)" class="btn-edit">Editar</button>
+            <button (click)="deleteCurso(curso.id!)" class="btn-delete">Eliminar</button>
+          </td>
+        </tr>
+        <tr *ngIf="cursos.length === 0">
+          <td colspan="10" class="no-data">No se encontraron cursos</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Detalle Curso -->
+  <div *ngIf="showDetail && selectedCurso" class="modal-overlay" (click)="closeDetail()">
+    <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📚 {{ selectedCurso.codigo }} - {{ selectedCurso.nombre }}</h2>
+        <button (click)="closeDetail()" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="detail-content">
+        <!-- Badges -->
+        <div class="detail-badges-row">
+          <span [class]="'badge-large ' + getModalidadClass(selectedCurso.modalidad)">
+            {{ selectedCurso.modalidad | titlecase }}
+          </span>
+          <span [class]="'badge-large ' + getEstatusClass(selectedCurso.estatus)">
+            {{ selectedCurso.estatus | titlecase }}
+          </span>
+        </div>
+
+        <!-- Información General -->
+        <div class="detail-section">
+          <h4>📝 Información General</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Código</label>
+              <span>{{ selectedCurso.codigo }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Créditos</label>
+              <span>{{ selectedCurso.creditos || 0 }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Horas/Semana</label>
+              <span>{{ selectedCurso.horas_semana || 0 }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Semestre</label>
+              <span>{{ selectedCurso.semestre || 'No definido' }}</span>
+            </div>
+            <div class="detail-item full-width" *ngIf="selectedCurso.descripcion">
+              <label>Descripción</label>
+              <span>{{ selectedCurso.descripcion }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Academia</label>
+              <span>{{ selectedCurso.academia_nombre || 'No asignada' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Docentes Asignados -->
+        <div class="detail-section">
+          <div class="section-header">
+            <h4>👥 Docentes Asignados</h4>
+            <button (click)="openAsignacion(selectedCurso)" class="btn-small">+ Asignar</button>
+          </div>
+          <div *ngIf="loadingDetail" class="loading-small">Cargando docentes...</div>
+          <div *ngIf="!loadingDetail && cursoDocentes.length === 0" class="no-areas">
+            No hay docentes asignados a este curso
+          </div>
+          <div *ngIf="!loadingDetail && cursoDocentes.length > 0" class="docentes-list">
+            <div *ngFor="let asig of cursoDocentes" class="docente-card">
+              <div class="docente-info">
+                <span class="docente-nombre">{{ asig.docente_nombre }}</span>
+                <span class="docente-email">{{ asig.docente_email }}</span>
+              </div>
+              <div class="asignacion-info">
+                <span class="periodo">📅 {{ asig.periodo }}</span>
+                <span class="grupo">Grupo {{ asig.grupo }}</span>
+                <span class="horario" *ngIf="asig.horario">🕐 {{ asig.horario }}</span>
+                <span class="aula" *ngIf="asig.aula">📍 {{ asig.aula }}</span>
+                <span class="inscritos">👥 {{ asig.inscritos }}/{{ asig.cupo_maximo }}</span>
+              </div>
+              <button (click)="deleteAsignacion(asig.asignacion_id!)" class="btn-delete-small">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-actions">
+        <button (click)="editFromDetail()" class="btn-primary">✏️ Editar Curso</button>
+        <button (click)="closeDetail()" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Formulario -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content form-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingCurso ? 'Editar Curso' : 'Nuevo Curso' }}</h2>
+        <button (click)="closeForm()" class="close-btn">&times;</button>
+      </div>
+      
+      <form (ngSubmit)="saveCurso()" class="curso-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="codigo">Código *</label>
+            <input 
+              type="text" 
+              id="codigo" 
+              [(ngModel)]="formData.codigo" 
+              name="codigo"
+              (blur)="validateField('codigo')"
+              [class.error]="hasError('codigo')"
+              placeholder="Ej: SIS101"
+            />
+            <span *ngIf="hasError('codigo')" class="error-message">{{ getError('codigo') }}</span>
+          </div>
+          <div class="form-group">
+            <label for="nombre">Nombre *</label>
+            <input 
+              type="text" 
+              id="nombre" 
+              [(ngModel)]="formData.nombre" 
+              name="nombre"
+              (blur)="validateField('nombre')"
+              [class.error]="hasError('nombre')"
+              placeholder="Nombre del curso"
+            />
+            <span *ngIf="hasError('nombre')" class="error-message">{{ getError('nombre') }}</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea 
+            id="descripcion" 
+            [(ngModel)]="formData.descripcion" 
+            name="descripcion"
+            rows="3"
+            placeholder="Descripción del curso..."
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="creditos">Créditos</label>
+            <input 
+              type="number" 
+              id="creditos" 
+              [(ngModel)]="formData.creditos" 
+              name="creditos"
+              min="0" 
+              max="20"
+              (blur)="validateField('creditos')"
+              [class.error]="hasError('creditos')"
+            />
+            <span *ngIf="hasError('creditos')" class="error-message">{{ getError('creditos') }}</span>
+          </div>
+          <div class="form-group">
+            <label for="horas_semana">Horas/Semana</label>
+            <input 
+              type="number" 
+              id="horas_semana" 
+              [(ngModel)]="formData.horas_semana" 
+              name="horas_semana"
+              min="0" 
+              max="20"
+            />
+          </div>
+          <div class="form-group">
+            <label for="semestre">Semestre</label>
+            <select id="semestre" [(ngModel)]="formData.semestre" name="semestre">
+              <option [value]="undefined">Sin definir</option>
+              <option *ngFor="let s of [1,2,3,4,5,6,7,8,9,10]" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="modalidad">Modalidad</label>
+            <select id="modalidad" [(ngModel)]="formData.modalidad" name="modalidad">
+              <option value="presencial">Presencial</option>
+              <option value="virtual">Virtual</option>
+              <option value="hibrido">Híbrido</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="academia_id">Academia</label>
+            <select id="academia_id" [(ngModel)]="formData.academia_id" name="academia_id">
+              <option [value]="undefined">Sin academia</option>
+              <option *ngFor="let a of academias" [value]="a.id">{{ a.nombre }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="estatus">Estatus</label>
+            <select id="estatus" [(ngModel)]="formData.estatus" name="estatus">
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">
+            {{ editingCurso ? 'Actualizar' : 'Crear' }} Curso
+          </button>
+          <button type="button" (click)="closeForm()" class="btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Asignación de Docente -->
+  <div *ngIf="showAsignacion" class="modal-overlay" (click)="closeAsignacion()">
+    <div class="modal-content asignacion-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>👤 Asignar Docente</h2>
+        <button (click)="closeAsignacion()" class="close-btn">&times;</button>
+      </div>
+      
+      <form (ngSubmit)="saveAsignacion()" class="asignacion-form">
+        <div class="form-group">
+          <label for="docente_id">Docente *</label>
+          <select id="docente_id" [(ngModel)]="asignacionData.docente_id" name="docente_id" required>
+            <option [value]="0">Selecciona un docente</option>
+            <option *ngFor="let d of docentes" [value]="d.id">{{ d.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="periodo">Período *</label>
+            <select id="periodo" [(ngModel)]="asignacionData.periodo" name="periodo" required>
+              <option value="">Selecciona período</option>
+              <option *ngFor="let p of periodos" [value]="p.codigo">{{ p.nombre }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="grupo">Grupo</label>
+            <input type="text" id="grupo" [(ngModel)]="asignacionData.grupo" name="grupo" placeholder="A" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="horario">Horario</label>
+            <input type="text" id="horario" [(ngModel)]="asignacionData.horario" name="horario" placeholder="Lun-Mié 08:00-10:00" />
+          </div>
+          <div class="form-group">
+            <label for="aula">Aula</label>
+            <input type="text" id="aula" [(ngModel)]="asignacionData.aula" name="aula" placeholder="A-101" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cupo_maximo">Cupo Máximo</label>
+            <input type="number" id="cupo_maximo" [(ngModel)]="asignacionData.cupo_maximo" name="cupo_maximo" min="1" />
+          </div>
+          <div class="form-group">
+            <label for="inscritos">Inscritos</label>
+            <input type="number" id="inscritos" [(ngModel)]="asignacionData.inscritos" name="inscritos" min="0" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Asignar Docente</button>
+          <button type="button" (click)="closeAsignacion()" class="btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

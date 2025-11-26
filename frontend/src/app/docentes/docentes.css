@@ -550,3 +550,155 @@ h1 {
   padding: 20px;
   border-top: 1px solid #eee;
 }
+
+/* ========== BOTÓN PDF ========== */
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-pdf {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-pdf:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+/* ========== EVALUACIONES EN DETALLE ========== */
+.evaluaciones-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.evaluaciones-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.eval-global {
+  text-align: center;
+  padding: 24px;
+  border-radius: 12px;
+  background: #f5f5f5;
+}
+
+.eval-global.excelente { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); color: white; }
+.eval-global.muy-bueno { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+.eval-global.bueno { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+.eval-global.regular { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+.eval-global.bajo { background: linear-gradient(135deg, #ff6b6b 0%, #c0392b 100%); color: white; }
+
+.eval-numero {
+  display: block;
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.eval-texto {
+  display: block;
+  font-size: 14px;
+  margin-top: 4px;
+  opacity: 0.9;
+}
+
+.eval-count {
+  display: block;
+  font-size: 12px;
+  margin-top: 8px;
+  opacity: 0.8;
+}
+
+.eval-tipos {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.eval-tipo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  min-width: 80px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.tipo-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.tipo-count {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+}
+
+.tipo-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.eval-criterios h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.criterio-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.criterio-nombre {
+  flex: 1;
+  font-size: 13px;
+  color: #555;
+  min-width: 120px;
+}
+
+.barra-container {
+  flex: 2;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barra-valor {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.barra-valor.excelente { background: linear-gradient(90deg, #56ab2f 0%, #a8e063 100%); }
+.barra-valor.muy-bueno { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+.barra-valor.bueno { background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%); }
+.barra-valor.regular { background: linear-gradient(90deg, #f5af19 0%, #f12711 100%); }
+.barra-valor.bajo { background: linear-gradient(90deg, #c0392b 0%, #e74c3c 100%); }
+
+.criterio-valor {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  min-width: 35px;
+  text-align: right;
+}

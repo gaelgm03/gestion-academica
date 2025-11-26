@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Docente, AreaEspecialidad } from '../services/api.service';
+import { ApiService, Docente, AreaEspecialidad, ResumenEvaluacionDocente } from '../services/api.service';
+import { PdfService } from '../services/pdf.service';
 
 @Component({
   selector: 'app-docentes',
@@ -21,7 +22,9 @@ export class Docentes implements OnInit {
   showDetail = false;
   selectedDocente: Docente | null = null;
   docenteAreas: AreaEspecialidad[] = [];
+  docenteEvaluaciones: ResumenEvaluacionDocente | null = null;
   loadingDetail = false;
+  loadingEvaluaciones = false;
   formData: Docente = {
     nombre: '',
     email: '',
@@ -46,7 +49,7 @@ export class Docentes implements OnInit {
     search: ''
   };
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private pdfService: PdfService) {}
 
   ngOnInit() {
     this.loadDocentes();
@@ -302,12 +305,14 @@ export class Docentes implements OnInit {
     this.selectedDocente = docente;
     this.showDetail = true;
     this.loadDocenteAreas(docente.id!);
+    this.loadDocenteEvaluaciones(docente.id!);
   }
 
   closeDetail() {
     this.showDetail = false;
     this.selectedDocente = null;
     this.docenteAreas = [];
+    this.docenteEvaluaciones = null;
   }
 
   loadDocenteAreas(docenteId: number) {
@@ -326,10 +331,54 @@ export class Docentes implements OnInit {
     });
   }
 
+  loadDocenteEvaluaciones(docenteId: number) {
+    this.loadingEvaluaciones = true;
+    this.apiService.getResumenEvaluacionDocente(docenteId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.docenteEvaluaciones = response.data;
+        }
+        this.loadingEvaluaciones = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar evaluaciones:', err);
+        this.loadingEvaluaciones = false;
+      }
+    });
+  }
+
+  getCalificacionClass(calif: number | undefined): string {
+    if (!calif) return '';
+    if (calif >= 9) return 'excelente';
+    if (calif >= 8) return 'muy-bueno';
+    if (calif >= 7) return 'bueno';
+    if (calif >= 6) return 'regular';
+    return 'bajo';
+  }
+
   editFromDetail() {
     if (this.selectedDocente) {
       this.closeDetail();
       this.openForm(this.selectedDocente);
+    }
+  }
+
+  // ========== EXPORTAR PDF ==========
+  exportarPdf() {
+    if (this.docentes.length === 0) {
+      alert('No hay docentes para exportar');
+      return;
+    }
+    this.pdfService.exportarDocentes(this.docentes);
+  }
+
+  exportarEvaluacionPdf() {
+    if (this.selectedDocente && this.docenteEvaluaciones) {
+      this.pdfService.exportarEvaluacionDocente(
+        this.selectedDocente, 
+        this.docenteEvaluaciones, 
+        []
+      );
     }
   }
 }

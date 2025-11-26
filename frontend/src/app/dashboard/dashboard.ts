@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData, ChartType, registerables } from 'chart.js';
 import { ApiService, Dashboard as DashboardData, Periodo } from '../services/api.service';
+import { PdfService } from '../services/pdf.service';
 
 // Registrar todos los componentes de Chart.js
 Chart.register(...registerables);
@@ -111,7 +112,7 @@ export class Dashboard implements OnInit {
     }
   };
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private pdfService: PdfService) {}
 
   ngOnInit() {
     this.loadPeriodos();
@@ -255,5 +256,16 @@ export class Dashboard implements OnInit {
     const fechaFin = this.selectedPeriodo === 'personalizado' ? this.fechaFin : undefined;
     const url = this.apiService.getExportUrl('estadisticas', this.selectedPeriodo, fechaInicio, fechaFin);
     window.open(url, '_blank');
+  }
+
+  // ========== EXPORTAR PDF ==========
+  exportarDashboardPdf() {
+    if (!this.dashboardData) {
+      alert('No hay datos para exportar');
+      return;
+    }
+    this.pdfService.exportarDashboard(this.dashboardData, {
+      periodo: this.selectedPeriodo !== 'todo' ? this.selectedPeriodo : undefined
+    });
   }
 }

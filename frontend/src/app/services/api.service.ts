@@ -113,6 +113,143 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+// ========== CURSOS ==========
+export interface Curso {
+  id?: number;
+  codigo: string;
+  nombre: string;
+  descripcion?: string;
+  creditos?: number;
+  horas_semana?: number;
+  semestre?: number;
+  modalidad?: 'presencial' | 'virtual' | 'hibrido';
+  academia_id?: number;
+  academia_nombre?: string;
+  estatus?: 'activo' | 'inactivo';
+  fecha_creacion?: string;
+  docentes_asignados?: number;
+  total_inscritos?: number;
+  docentes?: DocenteCurso[];
+}
+
+export interface DocenteCurso {
+  asignacion_id?: number;
+  docente_id: number;
+  docente_nombre?: string;
+  docente_email?: string;
+  curso_id: number;
+  curso_codigo?: string;
+  curso_nombre?: string;
+  periodo: string;
+  grupo?: string;
+  horario?: string;
+  aula?: string;
+  cupo_maximo?: number;
+  inscritos?: number;
+  estatus?: 'activo' | 'finalizado' | 'cancelado';
+  fecha_asignacion?: string;
+}
+
+export interface PeriodoAcademico {
+  id: number;
+  codigo: string;
+  nombre: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estatus: 'planificacion' | 'activo' | 'finalizado';
+}
+
+export interface CursoStats {
+  total_cursos: number;
+  cursos_activos: number;
+  asignaciones_activas: number;
+  total_inscritos: number;
+  cursos_por_modalidad: Array<{ modalidad: string; cantidad: number }>;
+  cursos_por_academia: Array<{ academia: string; cantidad: number }>;
+}
+
+// ========== EVALUACIONES DOCENTES ==========
+export interface CriterioEvaluacion {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  categoria: 'conocimiento' | 'metodologia' | 'comunicacion' | 'puntualidad' | 'material' | 'evaluacion' | 'otro';
+  peso: number;
+  orden: number;
+}
+
+export interface PeriodoEvaluacion {
+  id: number;
+  nombre: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estatus: 'programado' | 'activo' | 'cerrado';
+}
+
+export interface EvaluacionDetalle {
+  id?: number;
+  criterio_id: number;
+  criterio_nombre?: string;
+  categoria?: string;
+  peso?: number;
+  calificacion: number;
+  comentario?: string;
+}
+
+export interface EvaluacionDocente {
+  id?: number;
+  docente_id: number;
+  docente_nombre?: string;
+  docente_email?: string;
+  curso_id?: number;
+  curso_codigo?: string;
+  curso_nombre?: string;
+  periodo_evaluacion_id?: number;
+  periodo_nombre?: string;
+  evaluador_id?: number;
+  evaluador_nombre?: string;
+  tipo_evaluador: 'alumno' | 'par' | 'coordinador' | 'autoevaluacion';
+  calificacion_global?: number;
+  comentarios?: string;
+  fortalezas?: string;
+  areas_mejora?: string;
+  recomendaciones?: string;
+  fecha_evaluacion?: string;
+  estatus: 'borrador' | 'completada' | 'revisada';
+  detalles?: EvaluacionDetalle[];
+}
+
+export interface ResumenEvaluacionDocente {
+  total_evaluaciones: number;
+  promedio_global: number;
+  calificacion_minima: number;
+  calificacion_maxima: number;
+  eval_alumnos: number;
+  eval_pares: number;
+  eval_coordinadores: number;
+  autoevaluaciones: number;
+  promedios_criterios: Array<{
+    criterio_id: number;
+    criterio: string;
+    categoria: string;
+    promedio: number;
+    total_respuestas: number;
+  }>;
+  evolucion: Array<{
+    periodo: string;
+    promedio: number;
+    total_evaluaciones: number;
+  }>;
+}
+
+export interface EvaluacionStats {
+  total_evaluaciones: number;
+  promedio_general: number;
+  por_tipo_evaluador: Array<{ tipo_evaluador: string; cantidad: number; promedio: number }>;
+  top_docentes: Array<{ docente: string; promedio: number; total_evaluaciones: number }>;
+  distribucion_calificaciones: Array<{ rango: string; cantidad: number }>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -272,6 +409,160 @@ export class ApiService {
 
   getDownloadUrl(incidenciaId: number, filename: string): string {
     return `${API_URL}/api/download.php?incidencia_id=${incidenciaId}&file=${encodeURIComponent(filename)}`;
+  }
+
+  // ========== CURSOS ==========
+  getCursos(filters?: {
+    estatus?: string;
+    academia_id?: number;
+    semestre?: number;
+    modalidad?: string;
+    search?: string;
+  }): Observable<ApiResponse<Curso[]>> {
+    let params = new HttpParams();
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        const value = (filters as any)[key];
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<ApiResponse<Curso[]>>(`${API_URL}/api/cursos.php`, { params });
+  }
+
+  getCurso(id: number): Observable<ApiResponse<Curso>> {
+    return this.http.get<ApiResponse<Curso>>(`${API_URL}/api/cursos.php?id=${id}`);
+  }
+
+  createCurso(data: Curso): Observable<ApiResponse<Curso>> {
+    return this.http.post<ApiResponse<Curso>>(`${API_URL}/api/cursos.php`, data);
+  }
+
+  updateCurso(id: number, data: Partial<Curso>): Observable<ApiResponse<Curso>> {
+    return this.http.put<ApiResponse<Curso>>(`${API_URL}/api/cursos.php?id=${id}`, data);
+  }
+
+  deleteCurso(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${API_URL}/api/cursos.php?id=${id}`);
+  }
+
+  getCursosStats(): Observable<ApiResponse<CursoStats>> {
+    return this.http.get<ApiResponse<CursoStats>>(`${API_URL}/api/cursos.php?action=stats`);
+  }
+
+  getCursosParaSelector(search?: string): Observable<ApiResponse<Curso[]>> {
+    let url = `${API_URL}/api/cursos.php?action=selector`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    return this.http.get<ApiResponse<Curso[]>>(url);
+  }
+
+  // ========== PERÍODOS ACADÉMICOS ==========
+  getPeriodosAcademicos(estatus?: string): Observable<ApiResponse<PeriodoAcademico[]>> {
+    let url = `${API_URL}/api/cursos.php?action=periodos`;
+    if (estatus) {
+      url += `&estatus=${estatus}`;
+    }
+    return this.http.get<ApiResponse<PeriodoAcademico[]>>(url);
+  }
+
+  getPeriodoActivo(): Observable<ApiResponse<PeriodoAcademico>> {
+    return this.http.get<ApiResponse<PeriodoAcademico>>(`${API_URL}/api/cursos.php?action=periodo_activo`);
+  }
+
+  // ========== ASIGNACIONES DOCENTE-CURSO ==========
+  getDocentesDelCurso(cursoId: number, periodo?: string): Observable<ApiResponse<DocenteCurso[]>> {
+    let url = `${API_URL}/api/cursos.php?action=docentes&id=${cursoId}`;
+    if (periodo) {
+      url += `&periodo=${encodeURIComponent(periodo)}`;
+    }
+    return this.http.get<ApiResponse<DocenteCurso[]>>(url);
+  }
+
+  getCursosDelDocente(docenteId: number, periodo?: string): Observable<ApiResponse<DocenteCurso[]>> {
+    let url = `${API_URL}/api/cursos.php?action=cursos_docente&docente_id=${docenteId}`;
+    if (periodo) {
+      url += `&periodo=${encodeURIComponent(periodo)}`;
+    }
+    return this.http.get<ApiResponse<DocenteCurso[]>>(url);
+  }
+
+  asignarDocenteACurso(data: DocenteCurso): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${API_URL}/api/cursos.php?action=asignar_docente`, data);
+  }
+
+  actualizarAsignacion(id: number, data: Partial<DocenteCurso>): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${API_URL}/api/cursos.php?action=asignacion&id=${id}`, data);
+  }
+
+  eliminarAsignacion(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${API_URL}/api/cursos.php?action=asignacion&id=${id}`);
+  }
+
+  // ========== EVALUACIONES DOCENTES ==========
+  getEvaluaciones(filters?: {
+    docente_id?: number;
+    curso_id?: number;
+    periodo_id?: number;
+    tipo_evaluador?: string;
+    estatus?: string;
+  }): Observable<ApiResponse<EvaluacionDocente[]>> {
+    let params = new HttpParams();
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        const value = (filters as any)[key];
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get<ApiResponse<EvaluacionDocente[]>>(`${API_URL}/api/evaluaciones.php`, { params });
+  }
+
+  getEvaluacion(id: number): Observable<ApiResponse<EvaluacionDocente>> {
+    return this.http.get<ApiResponse<EvaluacionDocente>>(`${API_URL}/api/evaluaciones.php?id=${id}`);
+  }
+
+  createEvaluacion(data: EvaluacionDocente): Observable<ApiResponse<EvaluacionDocente>> {
+    return this.http.post<ApiResponse<EvaluacionDocente>>(`${API_URL}/api/evaluaciones.php`, data);
+  }
+
+  updateEvaluacion(id: number, data: Partial<EvaluacionDocente>): Observable<ApiResponse<EvaluacionDocente>> {
+    return this.http.put<ApiResponse<EvaluacionDocente>>(`${API_URL}/api/evaluaciones.php?id=${id}`, data);
+  }
+
+  deleteEvaluacion(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${API_URL}/api/evaluaciones.php?id=${id}`);
+  }
+
+  getEvaluacionesStats(): Observable<ApiResponse<EvaluacionStats>> {
+    return this.http.get<ApiResponse<EvaluacionStats>>(`${API_URL}/api/evaluaciones.php?action=stats`);
+  }
+
+  getCriteriosEvaluacion(): Observable<ApiResponse<CriterioEvaluacion[]>> {
+    return this.http.get<ApiResponse<CriterioEvaluacion[]>>(`${API_URL}/api/evaluaciones.php?action=criterios`);
+  }
+
+  getPeriodosEvaluacion(estatus?: string): Observable<ApiResponse<PeriodoEvaluacion[]>> {
+    let url = `${API_URL}/api/evaluaciones.php?action=periodos`;
+    if (estatus) {
+      url += `&estatus=${estatus}`;
+    }
+    return this.http.get<ApiResponse<PeriodoEvaluacion[]>>(url);
+  }
+
+  getResumenEvaluacionDocente(docenteId: number): Observable<ApiResponse<ResumenEvaluacionDocente>> {
+    return this.http.get<ApiResponse<ResumenEvaluacionDocente>>(
+      `${API_URL}/api/evaluaciones.php?action=resumen_docente&docente_id=${docenteId}`
+    );
+  }
+
+  getEvaluacionesDocente(docenteId: number): Observable<ApiResponse<EvaluacionDocente[]>> {
+    return this.http.get<ApiResponse<EvaluacionDocente[]>>(
+      `${API_URL}/api/evaluaciones.php?action=docente&docente_id=${docenteId}`
+    );
   }
 }
 

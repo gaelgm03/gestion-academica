@@ -11,6 +11,28 @@
   margin-bottom: 24px;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-pdf {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-pdf:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
 h1 {
   color: #333;
   margin: 0;

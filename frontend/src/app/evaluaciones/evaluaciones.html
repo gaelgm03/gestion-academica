@@ -1,0 +1,307 @@
+<div class="evaluaciones-container">
+  <div class="header">
+    <h1>⭐ Evaluación Docente</h1>
+    <div class="header-actions">
+      <button class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
+      <button (click)="openForm()" class="btn-primary">+ Nueva Evaluación</button>
+    </div>
+  </div>
+
+  <!-- Estadísticas Rápidas -->
+  <div *ngIf="stats" class="stats-cards">
+    <div class="stat-card">
+      <span class="stat-value">{{ stats.total_evaluaciones }}</span>
+      <span class="stat-label">Total Evaluaciones</span>
+    </div>
+    <div class="stat-card highlight">
+      <span class="stat-value">{{ stats.promedio_general | number:'1.1-1' }}</span>
+      <span class="stat-label">Promedio General</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ stats.top_docentes ? stats.top_docentes.length : 0 }}</span>
+      <span class="stat-label">Docentes Evaluados</span>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters">
+    <select [(ngModel)]="filters.docente_id" (change)="applyFilters()">
+      <option value="">Todos los docentes</option>
+      <option *ngFor="let d of docentes" [value]="d.id">{{ d.nombre }}</option>
+    </select>
+    <select [(ngModel)]="filters.tipo_evaluador" (change)="applyFilters()">
+      <option value="">Todos los tipos</option>
+      <option value="alumno">Alumno</option>
+      <option value="par">Par</option>
+      <option value="coordinador">Coordinador</option>
+      <option value="autoevaluacion">Autoevaluación</option>
+    </select>
+    <select [(ngModel)]="filters.estatus" (change)="applyFilters()">
+      <option value="">Todos los estatus</option>
+      <option value="completada">Completada</option>
+      <option value="borrador">Borrador</option>
+      <option value="revisada">Revisada</option>
+    </select>
+    <select [(ngModel)]="filters.periodo_id" (change)="applyFilters()">
+      <option value="">Todos los períodos</option>
+      <option *ngFor="let p of periodos" [value]="p.id">{{ p.nombre }}</option>
+    </select>
+    <button (click)="clearFilters()" class="btn-secondary">Limpiar</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">Cargando evaluaciones...</div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <!-- Tabla de Evaluaciones -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="evaluaciones-table">
+      <thead>
+        <tr>
+          <th>Docente</th>
+          <th>Curso</th>
+          <th>Tipo Evaluador</th>
+          <th>Calificación</th>
+          <th>Período</th>
+          <th>Fecha</th>
+          <th>Estatus</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let eval of evaluaciones">
+          <td class="docente-cell">
+            <strong>{{ eval.docente_nombre }}</strong>
+          </td>
+          <td>{{ eval.curso_nombre || 'General' }}</td>
+          <td>{{ getTipoEvaluadorLabel(eval.tipo_evaluador) }}</td>
+          <td class="calificacion-cell">
+            <span [class]="'calificacion ' + getCalificacionClass(eval.calificacion_global)">
+              {{ eval.calificacion_global | number:'1.1-1' }}
+            </span>
+          </td>
+          <td>{{ eval.periodo_nombre || 'N/A' }}</td>
+          <td>{{ formatDate(eval.fecha_evaluacion || '') }}</td>
+          <td>
+            <span [class]="'badge ' + getEstatusClass(eval.estatus)">
+              {{ eval.estatus | titlecase }}
+            </span>
+          </td>
+          <td class="actions">
+            <button (click)="openDetail(eval)" class="btn-view">Ver</button>
+            <button (click)="openForm(eval)" class="btn-edit">Editar</button>
+            <button (click)="deleteEvaluacion(eval.id!)" class="btn-delete">Eliminar</button>
+          </td>
+        </tr>
+        <tr *ngIf="evaluaciones.length === 0">
+          <td colspan="8" class="no-data">No se encontraron evaluaciones</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Detalle -->
+  <div *ngIf="showDetail && selectedEvaluacion" class="modal-overlay" (click)="closeDetail()">
+    <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📋 Detalle de Evaluación</h2>
+        <button (click)="closeDetail()" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="detail-content">
+        <!-- Calificación Global -->
+        <div class="calificacion-grande" [class]="getCalificacionClass(selectedEvaluacion.calificacion_global)">
+          <span class="numero">{{ selectedEvaluacion.calificacion_global | number:'1.1-1' }}</span>
+          <span class="texto">Calificación Global</span>
+        </div>
+
+        <!-- Info General -->
+        <div class="detail-section">
+          <h4>👤 Información</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Docente</label>
+              <span>{{ selectedEvaluacion.docente_nombre }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Curso</label>
+              <span>{{ selectedEvaluacion.curso_nombre || 'Evaluación General' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Tipo de Evaluador</label>
+              <span>{{ getTipoEvaluadorLabel(selectedEvaluacion.tipo_evaluador) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Período</label>
+              <span>{{ selectedEvaluacion.periodo_nombre || 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calificaciones por Criterio -->
+        <div class="detail-section" *ngIf="selectedEvaluacion.detalles && selectedEvaluacion.detalles.length > 0">
+          <h4>📊 Calificaciones por Criterio</h4>
+          <div class="criterios-list">
+            <div *ngFor="let detalle of selectedEvaluacion.detalles" class="criterio-item">
+              <div class="criterio-info">
+                <span class="criterio-nombre">{{ detalle.criterio_nombre }}</span>
+                <span class="criterio-categoria">{{ getCategoriaLabel(detalle.categoria || '') }}</span>
+              </div>
+              <div class="criterio-barra">
+                <div class="barra-fondo">
+                  <div class="barra-valor" [style.width.%]="detalle.calificacion * 10" 
+                       [class]="getCalificacionClass(detalle.calificacion)"></div>
+                </div>
+                <span class="criterio-calificacion">{{ detalle.calificacion | number:'1.1-1' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comentarios -->
+        <div class="detail-section" *ngIf="selectedEvaluacion.comentarios || selectedEvaluacion.fortalezas || selectedEvaluacion.areas_mejora">
+          <h4>💬 Comentarios</h4>
+          <div class="comentarios-grid">
+            <div class="comentario-box fortalezas" *ngIf="selectedEvaluacion.fortalezas">
+              <label>✅ Fortalezas</label>
+              <p>{{ selectedEvaluacion.fortalezas }}</p>
+            </div>
+            <div class="comentario-box mejoras" *ngIf="selectedEvaluacion.areas_mejora">
+              <label>📈 Áreas de Mejora</label>
+              <p>{{ selectedEvaluacion.areas_mejora }}</p>
+            </div>
+            <div class="comentario-box general" *ngIf="selectedEvaluacion.comentarios">
+              <label>💭 Comentarios Generales</label>
+              <p>{{ selectedEvaluacion.comentarios }}</p>
+            </div>
+            <div class="comentario-box recomendaciones" *ngIf="selectedEvaluacion.recomendaciones">
+              <label>💡 Recomendaciones</label>
+              <p>{{ selectedEvaluacion.recomendaciones }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-actions">
+        <button (click)="closeDetail()" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Formulario -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content form-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingEvaluacion ? 'Editar Evaluación' : 'Nueva Evaluación' }}</h2>
+        <button (click)="closeForm()" class="close-btn">&times;</button>
+      </div>
+      
+      <form (ngSubmit)="saveEvaluacion()" class="evaluacion-form">
+        <!-- Información básica -->
+        <div class="form-section">
+          <h4>📝 Información Básica</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Docente *</label>
+              <select [(ngModel)]="formData.docente_id" name="docente_id" required>
+                <option [value]="0">Seleccionar docente</option>
+                <option *ngFor="let d of docentes" [value]="d.id">{{ d.nombre }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tipo de Evaluador</label>
+              <select [(ngModel)]="formData.tipo_evaluador" name="tipo_evaluador">
+                <option value="alumno">Alumno</option>
+                <option value="par">Par Académico</option>
+                <option value="coordinador">Coordinador</option>
+                <option value="autoevaluacion">Autoevaluación</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Curso (opcional)</label>
+              <select [(ngModel)]="formData.curso_id" name="curso_id">
+                <option [value]="undefined">Evaluación General</option>
+                <option *ngFor="let c of cursos" [value]="c.id">{{ c.codigo }} - {{ c.nombre }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Período</label>
+              <select [(ngModel)]="formData.periodo_evaluacion_id" name="periodo_evaluacion_id">
+                <option [value]="undefined">Sin período</option>
+                <option *ngFor="let p of periodos" [value]="p.id">{{ p.nombre }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calificaciones por criterio -->
+        <div class="form-section">
+          <h4>⭐ Calificación por Criterios</h4>
+          <div *ngFor="let categoria of getCategorias()" class="categoria-group">
+            <h5>{{ getCategoriaLabel(categoria) }}</h5>
+            <div class="criterios-form">
+              <div *ngFor="let criterio of getCriteriosByCat(categoria)" class="criterio-input">
+                <label>{{ criterio.nombre }}</label>
+                <div class="rating-input">
+                  <input type="range" 
+                         [(ngModel)]="calificacionesCriterios[criterio.id]" 
+                         [name]="'criterio_' + criterio.id"
+                         min="0" max="10" step="0.5" />
+                  <span class="rating-value">{{ calificacionesCriterios[criterio.id] | number:'1.1-1' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comentarios -->
+        <div class="form-section">
+          <h4>💬 Comentarios</h4>
+          <div class="form-group">
+            <label>Fortalezas</label>
+            <textarea [(ngModel)]="formData.fortalezas" name="fortalezas" rows="2" 
+                      placeholder="¿Qué hace bien el docente?"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Áreas de Mejora</label>
+            <textarea [(ngModel)]="formData.areas_mejora" name="areas_mejora" rows="2"
+                      placeholder="¿En qué podría mejorar?"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Comentarios Generales</label>
+            <textarea [(ngModel)]="formData.comentarios" name="comentarios" rows="2"
+                      placeholder="Comentarios adicionales..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Recomendaciones</label>
+            <textarea [(ngModel)]="formData.recomendaciones" name="recomendaciones" rows="2"
+                      placeholder="Recomendaciones para el docente..."></textarea>
+          </div>
+        </div>
+
+        <!-- Estatus -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Estatus</label>
+            <select [(ngModel)]="formData.estatus" name="estatus">
+              <option value="borrador">Borrador</option>
+              <option value="completada">Completada</option>
+              <option value="revisada">Revisada</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">
+            {{ editingEvaluacion ? 'Actualizar' : 'Guardar' }} Evaluación
+          </button>
+          <button type="button" (click)="closeForm()" class="btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

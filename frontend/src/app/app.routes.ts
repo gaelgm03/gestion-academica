@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { Docentes } from './docentes/docentes';
 import { Incidencias } from './incidencias/incidencias';
+import { Cursos } from './cursos/cursos';
+import { Evaluaciones } from './evaluaciones/evaluaciones';
 import { Dashboard } from './dashboard/dashboard';
 import { Login } from './login/login';
 import { AuthGuard } from './guards/auth.guard';
@@ -21,6 +23,18 @@ export const routes: Routes = [
   { 
     path: 'incidencias', 
     component: Incidencias, 
+    canActivate: [AuthGuard],
+    data: { roles: ['admin', 'academia', 'coordinador'] }
+  },
+  { 
+    path: 'cursos', 
+    component: Cursos, 
+    canActivate: [AuthGuard],
+    data: { roles: ['admin', 'academia', 'coordinador'] }
+  },
+  { 
+    path: 'evaluaciones', 
+    component: Evaluaciones, 
     canActivate: [AuthGuard],
     data: { roles: ['admin', 'academia', 'coordinador'] }
   },

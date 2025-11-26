@@ -2,7 +2,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Incidencia, Docente, TipoIncidencia, UploadedFile, HistorialItem } from '../services/api.service';
+import { ApiService, Incidencia, Docente, TipoIncidencia, UploadedFile, HistorialItem, Curso } from '../services/api.service';
+import { PdfService } from '../services/pdf.service';
 
 @Component({
   selector: 'app-incidencias',
@@ -14,6 +15,7 @@ export class Incidencias implements OnInit {
   incidencias: Incidencia[] = [];
   docentes: Docente[] = [];
   tiposIncidencia: TipoIncidencia[] = [];
+  cursos: Curso[] = [];
   loading = true;
   error: string | null = null;
   showForm = false;
@@ -53,12 +55,13 @@ export class Incidencias implements OnInit {
     tipo_id: ''
   };
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private pdfService: PdfService) {}
 
   ngOnInit() {
     this.loadIncidencias();
     this.loadDocentes();
     this.loadTiposIncidencia();
+    this.loadCursos();
   }
 
   loadIncidencias() {
@@ -108,6 +111,19 @@ export class Incidencias implements OnInit {
       },
       error: (err) => {
         // Error silenciado - los tipos se cargan de forma opcional
+      }
+    });
+  }
+
+  loadCursos() {
+    this.apiService.getCursosParaSelector().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.cursos = response.data;
+        }
+      },
+      error: (err) => {
+        // Error silenciado - los cursos se cargan de forma opcional
       }
     });
   }
@@ -528,5 +544,14 @@ export class Incidencias implements OnInit {
     if (!asignadoId) return 'Sin asignar';
     const docente = this.docentes.find(d => d.id === asignadoId);
     return docente?.nombre || 'Desconocido';
+  }
+
+  // ========== EXPORTAR PDF ==========
+  exportarPdf() {
+    if (this.incidencias.length === 0) {
+      alert('No hay incidencias para exportar');
+      return;
+    }
+    this.pdfService.exportarIncidencias(this.incidencias);
   }
 }

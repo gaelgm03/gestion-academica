@@ -1,7 +1,10 @@
 <div class="docentes-container">
   <div class="header">
     <h1>Gestión de Docentes</h1>
-    <button class="btn-primary" (click)="openForm()">+ Nuevo Docente</button>
+    <div class="header-actions">
+      <button class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
+      <button class="btn-primary" (click)="openForm()">+ Nuevo Docente</button>
+    </div>
   </div>
 
   <!-- Filtros -->
@@ -156,9 +159,59 @@
             </div>
           </div>
         </div>
+
+        <!-- Evaluaciones -->
+        <div class="detail-section evaluaciones-section">
+          <h4>⭐ Evaluaciones Docentes</h4>
+          <div *ngIf="loadingEvaluaciones" class="loading-small">Cargando evaluaciones...</div>
+          <div *ngIf="!loadingEvaluaciones && (!docenteEvaluaciones || docenteEvaluaciones.total_evaluaciones === 0)" class="no-areas">
+            No hay evaluaciones registradas
+          </div>
+          <div *ngIf="!loadingEvaluaciones && docenteEvaluaciones && docenteEvaluaciones.total_evaluaciones > 0" class="evaluaciones-resumen">
+            <!-- Calificación Global -->
+            <div class="eval-global" [class]="getCalificacionClass(docenteEvaluaciones.promedio_global)">
+              <span class="eval-numero">{{ docenteEvaluaciones.promedio_global | number:'1.1-1' }}</span>
+              <span class="eval-texto">Promedio Global</span>
+              <span class="eval-count">{{ docenteEvaluaciones.total_evaluaciones }} evaluaciones</span>
+            </div>
+            
+            <!-- Desglose por tipo -->
+            <div class="eval-tipos">
+              <div class="eval-tipo" *ngIf="docenteEvaluaciones.eval_alumnos > 0">
+                <span class="tipo-icon">👨‍🎓</span>
+                <span class="tipo-count">{{ docenteEvaluaciones.eval_alumnos }}</span>
+                <span class="tipo-label">Alumnos</span>
+              </div>
+              <div class="eval-tipo" *ngIf="docenteEvaluaciones.eval_pares > 0">
+                <span class="tipo-icon">👥</span>
+                <span class="tipo-count">{{ docenteEvaluaciones.eval_pares }}</span>
+                <span class="tipo-label">Pares</span>
+              </div>
+              <div class="eval-tipo" *ngIf="docenteEvaluaciones.eval_coordinadores > 0">
+                <span class="tipo-icon">👔</span>
+                <span class="tipo-count">{{ docenteEvaluaciones.eval_coordinadores }}</span>
+                <span class="tipo-label">Coordinadores</span>
+              </div>
+            </div>
+
+            <!-- Top criterios -->
+            <div class="eval-criterios" *ngIf="docenteEvaluaciones.promedios_criterios && docenteEvaluaciones.promedios_criterios.length > 0">
+              <h5>Calificaciones por Criterio</h5>
+              <div *ngFor="let criterio of docenteEvaluaciones.promedios_criterios.slice(0, 5)" class="criterio-bar">
+                <span class="criterio-nombre">{{ criterio.criterio }}</span>
+                <div class="barra-container">
+                  <div class="barra-valor" [style.width.%]="criterio.promedio * 10" [class]="getCalificacionClass(criterio.promedio)"></div>
+                </div>
+                <span class="criterio-valor">{{ criterio.promedio | number:'1.1-1' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="detail-actions">
+        <button *ngIf="docenteEvaluaciones && docenteEvaluaciones.total_evaluaciones > 0" 
+                (click)="exportarEvaluacionPdf()" class="btn-pdf">📄 Exportar Evaluación</button>
         <button (click)="editFromDetail()" class="btn-primary">✏️ Editar Docente</button>
         <button (click)="closeDetail()" class="btn-secondary">Cerrar</button>
       </div>

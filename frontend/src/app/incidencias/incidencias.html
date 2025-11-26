@@ -1,7 +1,10 @@
 <div class="incidencias-container">
   <div class="header">
     <h1>Gestión de Incidencias</h1>
-    <button class="btn-primary" (click)="openForm()">+ Nueva Incidencia</button>
+    <div class="header-actions">
+      <button class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
+      <button class="btn-primary" (click)="openForm()">+ Nueva Incidencia</button>
+    </div>
   </div>
 
   <!-- Filtros -->
@@ -250,12 +253,15 @@
         </div>
         <div class="form-group" [class.has-error]="hasError('curso')">
           <label>Curso *</label>
-          <input 
-            type="text" 
+          <select 
             [(ngModel)]="formData.curso" 
             name="curso"
-            (blur)="validateField('curso')"
-            placeholder="Ej: Cálculo Integral">
+            (change)="validateField('curso')">
+            <option value="">Seleccionar curso</option>
+            <option *ngFor="let curso of cursos" [value]="curso.codigo + ' - ' + curso.nombre">
+              {{ curso.codigo }} - {{ curso.nombre }}
+            </option>
+          </select>
           <span *ngIf="hasError('curso')" class="error-message">{{ getError('curso') }}</span>
         </div>
         <div class="form-group" [class.has-error]="hasError('prioridad')">
