@@ -435,6 +435,202 @@ class Reporte {
     }
     
     // ========================================================================
+    // REPORTE POR MATERIA (Requisito MVP)
+    // ========================================================================
+    
+    /**
+     * Reporte de estadísticas por materia/curso
+     * Incluye: incidencias, docentes asignados, evaluaciones promedio
+     * 
+     * @param string $periodo Código del período
+     * @param string|null $fechaInicio Fecha inicio personalizada
+     * @param string|null $fechaFin Fecha fin personalizada
+     * @return array Estadísticas agrupadas por materia
+     */
+    public function getReportePorMateria($periodo = 'todo', $fechaInicio = null, $fechaFin = null) {
+        $fechas = $this->getPeriodoFechas($periodo, $fechaInicio, $fechaFin);
+        
+        // 1. Estadísticas generales de cursos
+        $sqlResumen = "
+            SELECT 
+                COUNT(*) as total_cursos,
+                SUM(CASE WHEN estatus = 'activo' THEN 1 ELSE 0 END) as cursos_activos,
+                SUM(CASE WHEN estatus = 'inactivo' THEN 1 ELSE 0 END) as cursos_inactivos
+            FROM curso
+        ";
+        $stmt = $this->pdo->query($sqlResumen);
+        $resumen = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // 2. Cursos con más incidencias
+        $sqlIncidencias = "
+            SELECT 
+                c.id,
+                c.codigo,
+                c.nombre as materia,
+                a.nombre as academia,
+                c.semestre,
+                c.modalidad,
+                COUNT(i.id) as total_incidencias,
+                SUM(CASE WHEN i.status = 'abierto' THEN 1 ELSE 0 END) as incidencias_abiertas,
+                SUM(CASE WHEN i.status = 'en proceso' THEN 1 ELSE 0 END) as incidencias_en_proceso,
+                SUM(CASE WHEN i.status = 'cerrado' THEN 1 ELSE 0 END) as incidencias_cerradas,
+                SUM(CASE WHEN i.prioridad = 'Alta' THEN 1 ELSE 0 END) as prioridad_alta,
+                SUM(CASE WHEN i.prioridad = 'Media' THEN 1 ELSE 0 END) as prioridad_media,
+                SUM(CASE WHEN i.prioridad = 'Baja' THEN 1 ELSE 0 END) as prioridad_baja
+            FROM curso c
+            LEFT JOIN academia a ON c.academia_id = a.id
+            LEFT JOIN incidencia i ON (c.id = i.curso_id OR c.nombre = i.curso)
+                AND DATE(i.fecha_creacion) BETWEEN :inicio AND :fin
+            WHERE c.estatus = 'activo'
+            GROUP BY c.id, c.codigo, c.nombre, a.nombre, c.semestre, c.modalidad
+            ORDER BY total_incidencias DESC
+            LIMIT 20
+        ";
+        $stmt = $this->pdo->prepare($sqlIncidencias);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
+        $cursosConIncidencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // 3. Cursos con docentes asignados y evaluaciones
+        $sqlDocentesCurso = "
+            SELECT 
+                c.id,
+                c.codigo,
+                c.nombre as materia,
+                a.nombre as academia,
+                COUNT(DISTINCT dc.docente_id) as total_docentes,
+                ROUND(AVG(ed.calificacion_global), 2) as promedio_evaluacion,
+                COUNT(DISTINCT ed.id) as total_evaluaciones
+            FROM curso c
+            LEFT JOIN academia a ON c.academia_id = a.id
+            LEFT JOIN docente_curso dc ON c.id = dc.curso_id AND dc.estatus = 'activo'
+            LEFT JOIN evaluacion_docente ed ON c.id = ed.curso_id AND ed.estatus = 'completada'
+            WHERE c.estatus = 'activo'
+            GROUP BY c.id, c.codigo, c.nombre, a.nombre
+            HAVING total_docentes > 0 OR total_evaluaciones > 0
+            ORDER BY promedio_evaluacion DESC, total_docentes DESC
+            LIMIT 20
+        ";
+        $stmt = $this->pdo->query($sqlDocentesCurso);
+        $cursosConDocentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // 4. Distribución por modalidad
+        $sqlModalidad = "
+            SELECT 
+                modalidad,
+                COUNT(*) as cantidad
+            FROM curso
+            WHERE estatus = 'activo'
+            GROUP BY modalidad
+            ORDER BY cantidad DESC
+        ";
+        $stmt = $this->pdo->query($sqlModalidad);
+        $porModalidad = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // 5. Distribución por academia
+        $sqlAcademia = "
+            SELECT 
+                COALESCE(a.nombre, 'Sin academia') as academia,
+                COUNT(c.id) as cantidad
+            FROM curso c
+            LEFT JOIN academia a ON c.academia_id = a.id
+            WHERE c.estatus = 'activo'
+            GROUP BY a.nombre
+            ORDER BY cantidad DESC
+        ";
+        $stmt = $this->pdo->query($sqlAcademia);
+        $porAcademia = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // 6. Distribución por semestre
+        $sqlSemestre = "
+            SELECT 
+                COALESCE(semestre, 0) as semestre,
+                COUNT(*) as cantidad
+            FROM curso
+            WHERE estatus = 'activo'
+            GROUP BY semestre
+            ORDER BY semestre ASC
+        ";
+        $stmt = $this->pdo->query($sqlSemestre);
+        $porSemestre = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // 7. Top materias por evaluación docente
+        $sqlTopEvaluaciones = "
+            SELECT 
+                c.codigo,
+                c.nombre as materia,
+                ROUND(AVG(ed.calificacion_global), 2) as promedio,
+                COUNT(ed.id) as total_evaluaciones,
+                MIN(ed.calificacion_global) as calificacion_min,
+                MAX(ed.calificacion_global) as calificacion_max
+            FROM curso c
+            INNER JOIN evaluacion_docente ed ON c.id = ed.curso_id
+            WHERE ed.estatus = 'completada'
+            GROUP BY c.id, c.codigo, c.nombre
+            HAVING total_evaluaciones >= 1
+            ORDER BY promedio DESC
+            LIMIT 10
+        ";
+        $stmt = $this->pdo->query($sqlTopEvaluaciones);
+        $topPorEvaluacion = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        return [
+            'periodo' => $fechas,
+            'resumen' => $resumen,
+            'cursos_con_incidencias' => $cursosConIncidencias,
+            'cursos_con_docentes' => $cursosConDocentes,
+            'distribucion_modalidad' => $porModalidad,
+            'distribucion_academia' => $porAcademia,
+            'distribucion_semestre' => $porSemestre,
+            'top_por_evaluacion' => $topPorEvaluacion
+        ];
+    }
+    
+    /**
+     * Exportar reporte por materia a CSV
+     * 
+     * @param string $periodo Código del período
+     * @param string|null $fechaInicio Fecha inicio personalizada
+     * @param string|null $fechaFin Fecha fin personalizada
+     * @return array Datos para exportación
+     */
+    public function getReportePorMateriaParaExportar($periodo = 'todo', $fechaInicio = null, $fechaFin = null) {
+        $fechas = $this->getPeriodoFechas($periodo, $fechaInicio, $fechaFin);
+        
+        $sql = "
+            SELECT 
+                c.codigo,
+                c.nombre as materia,
+                COALESCE(a.nombre, 'Sin academia') as academia,
+                c.semestre,
+                c.modalidad,
+                c.creditos,
+                c.horas_semana,
+                COUNT(DISTINCT dc.docente_id) as docentes_asignados,
+                COUNT(DISTINCT i.id) as total_incidencias,
+                SUM(CASE WHEN i.status = 'abierto' THEN 1 ELSE 0 END) as incidencias_abiertas,
+                ROUND(AVG(ed.calificacion_global), 2) as promedio_evaluacion
+            FROM curso c
+            LEFT JOIN academia a ON c.academia_id = a.id
+            LEFT JOIN docente_curso dc ON c.id = dc.curso_id
+            LEFT JOIN incidencia i ON (c.id = i.curso_id OR c.nombre = i.curso)
+                AND DATE(i.fecha_creacion) BETWEEN :inicio AND :fin
+            LEFT JOIN evaluacion_docente ed ON c.id = ed.curso_id AND ed.estatus = 'completada'
+            WHERE c.estatus = 'activo'
+            GROUP BY c.id, c.codigo, c.nombre, a.nombre, c.semestre, c.modalidad, c.creditos, c.horas_semana
+            ORDER BY c.nombre ASC
+        ";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
+        
+        return [
+            'periodo' => $fechas,
+            'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'headers' => ['Código', 'Materia', 'Academia', 'Semestre', 'Modalidad', 'Créditos', 'Hrs/Semana', 'Docentes', 'Incidencias', 'Abiertas', 'Prom. Evaluación']
+        ];
+    }
+    
+    // ========================================================================
     // EXPORTACIÓN CSV
     // ========================================================================
     

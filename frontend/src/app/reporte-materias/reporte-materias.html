@@ -1,0 +1,256 @@
+<div class="reporte-materias-container">
+  <div class="header">
+    <h1>📚 Reporte por Materia</h1>
+    <div class="header-actions">
+      <button class="btn-export csv" (click)="exportarCSV()">📥 CSV</button>
+      <button class="btn-export xlsx" (click)="exportarXLSX()">📊 Excel</button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Período:</label>
+      <select [(ngModel)]="selectedPeriodo" (change)="onPeriodoChange()">
+        <option *ngFor="let p of periodos" [value]="p.id">{{ p.nombre }}</option>
+      </select>
+    </div>
+    
+    <div *ngIf="showCustomDates" class="custom-dates">
+      <div class="filter-group">
+        <label>Desde:</label>
+        <input type="date" [(ngModel)]="fechaInicio">
+      </div>
+      <div class="filter-group">
+        <label>Hasta:</label>
+        <input type="date" [(ngModel)]="fechaFin">
+      </div>
+      <button class="btn-apply" (click)="applyCustomDates()">Aplicar</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando reporte...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+    <button (click)="loadReporte()">Reintentar</button>
+  </div>
+
+  <!-- Contenido -->
+  <div *ngIf="!loading && !error && reporteData" class="content">
+    <!-- Período Info -->
+    <div class="periodo-info">
+      <span class="periodo-label">📅 {{ reporteData.periodo.descripcion }}</span>
+      <span class="periodo-dates">({{ reporteData.periodo.inicio }} - {{ reporteData.periodo.fin }})</span>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-cards">
+      <div class="kpi-card">
+        <div class="kpi-value">{{ reporteData.resumen.total_cursos }}</div>
+        <div class="kpi-label">Total Materias</div>
+      </div>
+      <div class="kpi-card active">
+        <div class="kpi-value">{{ reporteData.resumen.cursos_activos }}</div>
+        <div class="kpi-label">Activas</div>
+      </div>
+      <div class="kpi-card inactive">
+        <div class="kpi-value">{{ reporteData.resumen.cursos_inactivos }}</div>
+        <div class="kpi-label">Inactivas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">{{ reporteData.cursos_con_incidencias.length }}</div>
+        <div class="kpi-label">Con Incidencias</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button 
+        [class.active]="activeTab === 'incidencias'" 
+        (click)="setActiveTab('incidencias')">
+        🎫 Incidencias por Materia
+      </button>
+      <button 
+        [class.active]="activeTab === 'docentes'" 
+        (click)="setActiveTab('docentes')">
+        👨‍🏫 Docentes por Materia
+      </button>
+      <button 
+        [class.active]="activeTab === 'distribucion'" 
+        (click)="setActiveTab('distribucion')">
+        📊 Distribución
+      </button>
+      <button 
+        [class.active]="activeTab === 'evaluaciones'" 
+        (click)="setActiveTab('evaluaciones')">
+        ⭐ Top Evaluaciones
+      </button>
+    </div>
+
+    <!-- Tab: Incidencias por Materia -->
+    <div *ngIf="activeTab === 'incidencias'" class="tab-content">
+      <h3>Materias con Incidencias</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Materia</th>
+              <th>Academia</th>
+              <th>Semestre</th>
+              <th>Modalidad</th>
+              <th>Total</th>
+              <th>Abiertas</th>
+              <th>En Proceso</th>
+              <th>Cerradas</th>
+              <th>Prioridad Alta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let curso of reporteData.cursos_con_incidencias" [class]="getIncidenciasClass(curso)">
+              <td><strong>{{ curso.codigo }}</strong></td>
+              <td>{{ curso.materia }}</td>
+              <td>{{ curso.academia || 'N/A' }}</td>
+              <td>{{ curso.semestre || '-' }}</td>
+              <td>{{ capitalize(curso.modalidad || '') }}</td>
+              <td><span class="badge total">{{ curso.total_incidencias }}</span></td>
+              <td><span class="badge warning">{{ curso.incidencias_abiertas }}</span></td>
+              <td><span class="badge info">{{ curso.incidencias_en_proceso }}</span></td>
+              <td><span class="badge success">{{ curso.incidencias_cerradas }}</span></td>
+              <td>
+                <span *ngIf="curso.prioridad_alta > 0" class="badge danger">{{ curso.prioridad_alta }}</span>
+                <span *ngIf="curso.prioridad_alta === 0">-</span>
+              </td>
+            </tr>
+            <tr *ngIf="reporteData.cursos_con_incidencias.length === 0">
+              <td colspan="10" class="no-data">No hay materias con incidencias en este período</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Docentes por Materia -->
+    <div *ngIf="activeTab === 'docentes'" class="tab-content">
+      <h3>Materias con Docentes Asignados</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Materia</th>
+              <th>Academia</th>
+              <th>Docentes</th>
+              <th>Evaluaciones</th>
+              <th>Promedio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let curso of reporteData.cursos_con_docentes">
+              <td><strong>{{ curso.codigo }}</strong></td>
+              <td>{{ curso.materia }}</td>
+              <td>{{ curso.academia || 'N/A' }}</td>
+              <td><span class="badge primary">{{ curso.total_docentes }}</span></td>
+              <td>{{ curso.total_evaluaciones }}</td>
+              <td>
+                <span *ngIf="curso.promedio_evaluacion" [class]="'eval-score ' + getEvaluacionClass(curso.promedio_evaluacion)">
+                  {{ curso.promedio_evaluacion }}
+                </span>
+                <span *ngIf="!curso.promedio_evaluacion">-</span>
+              </td>
+            </tr>
+            <tr *ngIf="reporteData.cursos_con_docentes.length === 0">
+              <td colspan="6" class="no-data">No hay materias con docentes asignados</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Distribución -->
+    <div *ngIf="activeTab === 'distribucion'" class="tab-content">
+      <h3>Distribución de Materias</h3>
+      <div class="charts-grid">
+        <!-- Gráfica: Por Modalidad -->
+        <div class="chart-card">
+          <h4>Por Modalidad</h4>
+          <div class="chart-container">
+            <canvas baseChart
+              [type]="modalidadChartType"
+              [data]="modalidadChartData"
+              [options]="modalidadChartOptions">
+            </canvas>
+          </div>
+        </div>
+
+        <!-- Gráfica: Por Academia -->
+        <div class="chart-card wide">
+          <h4>Por Academia</h4>
+          <div class="chart-container-wide">
+            <canvas baseChart
+              [type]="academiaChartType"
+              [data]="academiaChartData"
+              [options]="academiaChartOptions">
+            </canvas>
+          </div>
+        </div>
+
+        <!-- Gráfica: Por Semestre -->
+        <div class="chart-card">
+          <h4>Por Semestre</h4>
+          <div class="chart-container">
+            <canvas baseChart
+              [type]="semestreChartType"
+              [data]="semestreChartData"
+              [options]="semestreChartOptions">
+            </canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Top Evaluaciones -->
+    <div *ngIf="activeTab === 'evaluaciones'" class="tab-content">
+      <h3>Materias Mejor Evaluadas</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Materia</th>
+              <th>Promedio</th>
+              <th>Evaluaciones</th>
+              <th>Mín</th>
+              <th>Máx</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let curso of reporteData.top_por_evaluacion; let i = index">
+              <td><span class="rank">{{ i + 1 }}</span></td>
+              <td><strong>{{ curso.codigo }}</strong></td>
+              <td>{{ curso.materia }}</td>
+              <td>
+                <span [class]="'eval-score ' + getEvaluacionClass(curso.promedio)">
+                  {{ curso.promedio }}
+                </span>
+              </td>
+              <td>{{ curso.total_evaluaciones }}</td>
+              <td>{{ curso.calificacion_min }}</td>
+              <td>{{ curso.calificacion_max }}</td>
+            </tr>
+            <tr *ngIf="reporteData.top_por_evaluacion.length === 0">
+              <td colspan="7" class="no-data">No hay evaluaciones registradas</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

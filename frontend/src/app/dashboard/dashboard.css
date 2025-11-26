@@ -134,6 +134,54 @@ h1 {
   transform: translateY(0);
 }
 
+/* Export Dropdown */
+.export-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.export-dropdown .dropdown-toggle {
+  cursor: pointer;
+}
+
+.export-dropdown .dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  min-width: 120px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.export-dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.export-dropdown .dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.export-dropdown .dropdown-menu button:hover {
+  background: #f5f5f5;
+}
+
+.export-dropdown .dropdown-menu button:first-child {
+  border-bottom: 1px solid #eee;
+}
+
 .btn-pdf {
   display: flex;
   align-items: center;

@@ -31,15 +31,27 @@
       <button (click)="exportarDashboardPdf()" class="btn-pdf" title="Exportar resumen a PDF">
         📄 PDF
       </button>
-      <button (click)="exportarIncidencias()" class="btn-export" title="Exportar incidencias a CSV">
-        📥 Incidencias
-      </button>
-      <button (click)="exportarDocentes()" class="btn-export" title="Exportar docentes a CSV">
-        📥 Docentes
-      </button>
-      <button (click)="exportarEstadisticas()" class="btn-export" title="Exportar estadísticas a CSV">
-        📥 Estadísticas
-      </button>
+      <div class="export-dropdown">
+        <button class="btn-export dropdown-toggle">📥 Incidencias ▾</button>
+        <div class="dropdown-menu">
+          <button (click)="exportarIncidencias('csv')">📥 CSV</button>
+          <button (click)="exportarIncidencias('xlsx')">📊 Excel</button>
+        </div>
+      </div>
+      <div class="export-dropdown">
+        <button class="btn-export dropdown-toggle">📥 Docentes ▾</button>
+        <div class="dropdown-menu">
+          <button (click)="exportarDocentes('csv')">📥 CSV</button>
+          <button (click)="exportarDocentes('xlsx')">📊 Excel</button>
+        </div>
+      </div>
+      <div class="export-dropdown">
+        <button class="btn-export dropdown-toggle">📥 Estadísticas ▾</button>
+        <div class="dropdown-menu">
+          <button (click)="exportarEstadisticas('csv')">📥 CSV</button>
+          <button (click)="exportarEstadisticas('xlsx')">📊 Excel</button>
+        </div>
+      </div>
     </div>
   </div>
 

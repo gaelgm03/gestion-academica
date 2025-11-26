@@ -3,6 +3,7 @@ import { Docentes } from './docentes/docentes';
 import { Incidencias } from './incidencias/incidencias';
 import { Cursos } from './cursos/cursos';
 import { Evaluaciones } from './evaluaciones/evaluaciones';
+import { ReporteMaterias } from './reporte-materias/reporte-materias';
 import { Dashboard } from './dashboard/dashboard';
 import { Login } from './login/login';
 import { AuthGuard } from './guards/auth.guard';
@@ -37,6 +38,12 @@ export const routes: Routes = [
     component: Evaluaciones, 
     canActivate: [AuthGuard],
     data: { roles: ['admin', 'academia', 'coordinador'] }
+  },
+  { 
+    path: 'reporte-materias', 
+    component: ReporteMaterias, 
+    canActivate: [AuthGuard],
+    data: { roles: ['admin', 'academia', 'direccion', 'coordinador'] }
   },
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: '/dashboard' }

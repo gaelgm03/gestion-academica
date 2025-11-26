@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/Reporte.php';
 require_once __DIR__ . '/../auth/AuthMiddleware.php';
+require_once __DIR__ . '/../utils/XlsxExporter.php';
 
 // Función helper para respuestas JSON
 function jsonResponse($success, $message, $data = null, $code = 200) {
@@ -41,6 +42,18 @@ function csvResponse($csv, $filename) {
     header('Cache-Control: no-cache, must-revalidate');
     header('Pragma: no-cache');
     echo $csv;
+    exit();
+}
+
+// Función helper para respuestas XLSX
+function xlsxResponse($data, $headers, $filename, $sheetName = 'Datos') {
+    $xlsx = XlsxExporter::fromArray($data, $headers, $sheetName);
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . strlen($xlsx));
+    header('Cache-Control: no-cache, must-revalidate');
+    header('Pragma: no-cache');
+    echo $xlsx;
     exit();
 }
 
@@ -141,6 +154,12 @@ try {
             jsonResponse(true, 'Resumen ejecutivo del sistema', $data);
             break;
         
+        case 'reporte_por_materia':
+            // Reporte de estadísticas por materia/curso (Requisito MVP)
+            $data = $reporteModel->getReportePorMateria($periodo, $fechaInicio, $fechaFin);
+            jsonResponse(true, 'Reporte por materia', $data);
+            break;
+        
         // ============================================================
         // EXPORTACIONES CSV
         // ============================================================
@@ -168,6 +187,46 @@ try {
             $filename = 'estadisticas_' . date('Y-m-d_His') . '.csv';
             csvResponse($csv, $filename);
             break;
+        
+        case 'exportar_materias':
+            // Exportar reporte por materias a CSV
+            $exportData = $reporteModel->getReportePorMateriaParaExportar($periodo, $fechaInicio, $fechaFin);
+            $csv = Reporte::arrayToCsv($exportData['datos'], $exportData['headers']);
+            $filename = 'reporte_materias_' . date('Y-m-d_His') . '.csv';
+            csvResponse($csv, $filename);
+            break;
+        
+        // ============================================================
+        // EXPORTACIONES XLSX (Excel)
+        // ============================================================
+        
+        case 'exportar_incidencias_xlsx':
+            // Exportar incidencias a XLSX
+            $exportData = $reporteModel->getIncidenciasParaExportar($periodo, $fechaInicio, $fechaFin);
+            $filename = 'incidencias_' . date('Y-m-d_His') . '.xlsx';
+            xlsxResponse($exportData['datos'], $exportData['headers'], $filename, 'Incidencias');
+            break;
+        
+        case 'exportar_docentes_xlsx':
+            // Exportar docentes a XLSX
+            $exportData = $reporteModel->getDocentesParaExportar();
+            $filename = 'docentes_' . date('Y-m-d_His') . '.xlsx';
+            xlsxResponse($exportData['datos'], $exportData['headers'], $filename, 'Docentes');
+            break;
+        
+        case 'exportar_estadisticas_xlsx':
+            // Exportar estadísticas a XLSX
+            $exportData = $reporteModel->getEstadisticasParaExportar($periodo, $fechaInicio, $fechaFin);
+            $filename = 'estadisticas_' . date('Y-m-d_His') . '.xlsx';
+            xlsxResponse($exportData['datos'], $exportData['headers'], $filename, 'Estadisticas');
+            break;
+        
+        case 'exportar_materias_xlsx':
+            // Exportar reporte por materias a XLSX
+            $exportData = $reporteModel->getReportePorMateriaParaExportar($periodo, $fechaInicio, $fechaFin);
+            $filename = 'reporte_materias_' . date('Y-m-d_His') . '.xlsx';
+            xlsxResponse($exportData['datos'], $exportData['headers'], $filename, 'Materias');
+            break;
             
         default:
             jsonResponse(false, 'Tipo de reporte no válido', [
@@ -181,9 +240,15 @@ try {
                     'distribucion_idiomas',
                     'usuarios_mas_asignaciones',
                     'resumen_ejecutivo',
+                    'reporte_por_materia',
                     'exportar_incidencias',
                     'exportar_docentes',
-                    'exportar_estadisticas'
+                    'exportar_estadisticas',
+                    'exportar_materias',
+                    'exportar_incidencias_xlsx',
+                    'exportar_docentes_xlsx',
+                    'exportar_estadisticas_xlsx',
+                    'exportar_materias_xlsx'
                 ]
             ], 400);
             break;

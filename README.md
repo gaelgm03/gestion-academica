@@ -1,419 +1,253 @@
+<div align="center">
+
 # 🎓 Sistema de Gestión Académica
 
-> Plataforma modular diseñada para transformar la gestión administrativa de la Secretaría Académica, centralizando información docente, formalizando el manejo de incidencias y proporcionando herramientas de análisis para la toma de decisiones.
+**Plataforma web full-stack para la gestión integral de instituciones educativas**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PHP Version](https://img.shields.io/badge/PHP-8.x%2B-blue)](https://www.php.net/)
-[![Angular](https://img.shields.io/badge/Angular-20.x-red)](https://angular.io/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0%2B-orange)](https://www.mysql.com/)
+[![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
+[![Angular](https://img.shields.io/badge/Angular-20-DD0031?style=for-the-badge&logo=angular&logoColor=white)](https://angular.io)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 
----
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/gaelgm03/gestion-academica/pulls)
 
-## 📑 Tabla de Contenidos
+[Características](#-características) •
+[Demo](#-demo) •
+[Instalación](#-instalación-rápida) •
+[Documentación](#-documentación) •
+[Contribuir](#-contribuir)
 
-- [Contexto y Diagnóstico](#-contexto-y-diagnóstico)
-- [La Solución](#-la-solución)
-- [Arquitectura](#-arquitectura)
-- [Módulos del Sistema](#-módulos-del-sistema)
-- [Instalación](#-instalación-y-configuración)
-- [Modelo de Datos](#-modelo-de-datos)
-- [Roles y Permisos](#-sistema-de-roles-y-permisos)
-- [Equipo](#-equipo-de-desarrollo)
-- [Licencia](#-licencia)
+</div>
 
 ---
 
-## 🔍 Contexto y Diagnóstico
+## ✨ Características
 
-### Problemática Actual
+<table>
+<tr>
+<td width="50%">
 
-La Secretaría Académica enfrenta desafíos críticos que afectan la eficiencia operativa:
+### 👨‍🏫 Gestión de Docentes
+- Perfiles completos (CV, grados, SNI, idiomas)
+- Áreas de especialización con niveles
+- Historial de cursos impartidos
+- Estadísticas y métricas en tiempo real
 
-#### 1. **Procesos Desestructurados**
-- Gestión informal mediante correos electrónicos, WhatsApp y comunicación verbal
-- Ausencia de protocolos uniformes para reportar incidencias y cambios
-- Registros descentralizados por cada jefe de academia, causando duplicidad y errores
+</td>
+<td width="50%">
 
-#### 2. **Información Fragmentada**
-- No existe una base de datos centralizada de profesores (currículum, historial, incidencias, evaluaciones)
-- Documentos clave dispersos sin control de versiones
-- Obtención de numeralia básica requiere solicitudes individuales a cada responsable
+### 🎫 Sistema de Tickets
+- 5 categorías de incidencias predefinidas
+- Prioridades y SLAs configurables
+- Trazabilidad completa con historial
+- Adjuntar evidencias (documentos/imágenes)
 
-#### 3. **Impacto Operativo**
-- **Pérdida de tiempo:** Reportes manuales que deben recrearse constantemente
-- **Errores recurrentes:** Acuerdos no comunicados, duplicidad en contrataciones, inconsistencias en pagos
-- **Desgaste del equipo:** Exceso de mensajes informales y tareas repetitivas
+</td>
+</tr>
+<tr>
+<td width="50%">
 
-#### 4. **Necesidad Urgente**
-La Secretaría requiere un sistema que:
-- ✅ Centralice la base de datos docente
-- ✅ Formalice la gestión de incidencias
-- ✅ Garantice comunicación estructurada
-- ✅ Evite retrasos y errores en pagos y planeación académica
-
----
-
-## 💡 La Solución
-
-### Plataforma de Gestión Académica a la Medida
-
-Sistema web modular diseñado específicamente para resolver los puntos de dolor identificados, con tres pilares fundamentales:
-
-1. **Centralización de Información Docente** - Base de datos única y confiable
-2. **Formalización de Incidencias** - Sistema de tickets con trazabilidad completa
-3. **Inteligencia de Negocio** - Dashboards y reportes para la toma de decisiones
-
----
-
-## 🏗️ Arquitectura
-
-### Patrón Arquitectónico
-**Modular Monolith** - Módulos bien separados en un mismo repositorio, facilitando el desarrollo inicial y permitiendo escalabilidad futura.
-
-### Stack Tecnológico
-
-#### **Frontend**
-- **Framework:** Angular 20.x
-- **Lenguaje:** TypeScript
-- **UI/UX:** Diseño institucional con componentes modulares
-- **Características:** Formularios reactivos, acceso basado en roles
-
-#### **Backend (API)**
-- **Lenguaje:** PHP 8.x+
-- **Arquitectura:** RESTful API
-- **Autenticación:** LDAP Institucional
-- **Seguridad:** JWT tokens, validación de permisos por rol
-
-#### **Base de Datos**
-- **Motor:** MySQL 8.0+ / MSSQL Server
-- **ORM:** PDO con prepared statements
-- **Diseño:** Normalizado con integridad referencial
-
-### Diagrama de Arquitectura
-
-```
-┌─────────────────┐
-│   Frontend      │
-│   (Angular)     │
-└────────┬────────┘
-         │ HTTP/REST
-         │
-┌────────▼────────┐      ┌─────────────┐
-│   Backend API   │◄─────┤ LDAP Server │
-│   (PHP 8.x)     │      │ (Auth)      │
-└────────┬────────┘      └─────────────┘
-         │
-         │ PDO
-         │
-┌────────▼────────┐
-│   MySQL/MSSQL   │
-│   Database      │
-└─────────────────┘
-```
-
----
-
-## 📦 Módulos del Sistema
-
-### 1. 👨‍🏫 Base de Datos Docente
-**Piedra angular del sistema**
-
-**Funcionalidades:**
-- **Perfil único del profesor:**
-  - Currículum vitae
-  - Grados académicos
-  - Áreas de especialización
-  - Idiomas
-  - Sistema Nacional de Investigadores (SNI)
-  - Historial de clases impartidas
-  - Promedios de evaluación docente
-  - Registro de incidencias
-
-- **Numeralia en tiempo real:**
-  - Profesores activos/inactivos
-  - Distribución por grados académicos
-  - Dominio de idiomas
-  - Miembros SNI
-  - Estadísticas consolidadas
-
-- **Gestión centralizada:**
-  - Tablero para listar y filtrar profesores
-  - Búsqueda avanzada por múltiples criterios
-  - Exportación de datos
-
-### 2. 🎫 Tickets & Incidencias
-**Formalización de la gestión de reportes**
-
-**Categorías de Incidencias:**
-- 📝 Cambios de calificación
-- 📅 Cambios en fecha de examen
-- ⚠️ Reportes de integridad académica
-- 👤 Reporte disciplinar a profesor
-- 💰 Incidencia de pago (a favor/en contra)
-
-**Características:**
-- Sistema de prioridades (alta, media, baja)
-- Asignación de responsables
-- Trazabilidad completa (historial de cambios)
-- Adjuntar evidencias (documentos, imágenes)
-- Filtros por profesor, categoría, fecha y prioridad
-- SLA (Service Level Agreement) para seguimiento
-
-### 3. 📊 Dashboards y Reportes
-**Visualización ejecutiva e inteligencia de negocio**
-
-**Reportes Académicos:**
-- 📚 Por materia
-- 🎓 Por grado investigador SNI
-- 📋 Por número de incidencias
-- ⭐ Por satisfacción académica (evaluación docente)
-
-**KPIs para Dirección:**
-- Filtros personalizables (período semanal/mensual/anual)
-- Indicadores clave de desempeño
+### 📊 Dashboards & Reportes
+- KPIs ejecutivos con filtros temporales
+- Gráficas interactivas (Chart.js)
 - Exportación múltiple (CSV, XLSX, PDF)
-- Visualizaciones interactivas (gráficas, tablas dinámicas)
+- Reportes por materia, docente, academia
+
+</td>
+<td width="50%">
+
+### ⭐ Evaluación Docente
+- Criterios ponderados por categoría
+- Evaluaciones por alumno/par/coordinador
+- Promedios automáticos
+- Historial de evaluaciones
+
+</td>
+</tr>
+</table>
+
+### 🔐 Seguridad & Autenticación
+- **JWT** para autenticación stateless
+- **LDAP** institucional integrado
+- **5 roles** con permisos granulares (Admin, Academia, Dirección, Docente, Coordinador)
+- Validación de permisos por scope/action
 
 ---
 
-## 🚀 Instalación y Configuración
+## 🖼️ Demo
+
+<div align="center">
+
+| Dashboard | Gestión Docentes | Sistema de Tickets |
+|:---------:|:----------------:|:------------------:|
+| ![Dashboard](https://via.placeholder.com/280x180/1a1a2e/ffffff?text=Dashboard) | ![Docentes](https://via.placeholder.com/280x180/16213e/ffffff?text=Docentes) | ![Tickets](https://via.placeholder.com/280x180/0f3460/ffffff?text=Tickets) |
+
+</div>
+
+---
+
+## 🛠️ Stack Tecnológico
+
+<div align="center">
+
+| Frontend | Backend | Database | Tools |
+|:--------:|:-------:|:--------:|:-----:|
+| ![Angular](https://img.shields.io/badge/-Angular-DD0031?style=flat-square&logo=angular&logoColor=white) | ![PHP](https://img.shields.io/badge/-PHP%208-777BB4?style=flat-square&logo=php&logoColor=white) | ![MySQL](https://img.shields.io/badge/-MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white) | ![Git](https://img.shields.io/badge/-Git-F05032?style=flat-square&logo=git&logoColor=white) |
+| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) | ![JWT](https://img.shields.io/badge/-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white) | ![PDO](https://img.shields.io/badge/-PDO-777BB4?style=flat-square&logo=php&logoColor=white) | ![npm](https://img.shields.io/badge/-npm-CB3837?style=flat-square&logo=npm&logoColor=white) |
+| ![Chart.js](https://img.shields.io/badge/-Chart.js-FF6384?style=flat-square&logo=chartdotjs&logoColor=white) | ![REST](https://img.shields.io/badge/-REST%20API-009688?style=flat-square&logo=fastapi&logoColor=white) | | |
+
+</div>
+
+---
+
+## 🚀 Instalación Rápida
 
 ### Prerrequisitos
 
-Asegúrate de tener instalado:
-- **Node.js** 18+ y npm
-- **PHP** 8.0+
-- **MySQL** 8.0+ o **MSSQL Server**
-- **Composer** (gestor de dependencias PHP)
-- **Angular CLI** 20.x
-- **Git**
+- Node.js 18+ & npm
+- PHP 8.0+ con extensiones: PDO, pdo_mysql, json, mbstring, openssl
+- MySQL 8.0+
+- Angular CLI (`npm install -g @angular/cli`)
 
-### 1️⃣ Clonar el Repositorio
+### 1. Clonar repositorio
 
 ```bash
 git clone https://github.com/gaelgm03/gestion-academica.git
 cd gestion-academica
 ```
 
-### 2️⃣ Configurar Base de Datos
+### 2. Configurar Base de Datos
 
 ```bash
-cd database
-
-# MySQL
-mysql -u root -p < schema.sql
-
-# O importar desde tu gestor favorito (phpMyAdmin, DBeaver, MySQL Workbench)
+# Importar schema completo
+mysql -u root -p < database/schema.sql
 ```
 
-### 3️⃣ Configurar Backend
+### 3. Configurar Backend
 
 ```bash
 cd backend
-
-# Instalar dependencias (si aplica)
-composer install
-
-# Configurar variables de entorno
 cp .env.example .env
-
-# Editar .env con tus credenciales:
-# - Conexión a base de datos
-# - Configuración LDAP
-# - Secretos JWT
+# Editar .env con tus credenciales
 ```
 
-**Ejemplo `.env`:**
-```env
-DB_HOST=localhost
-DB_NAME=gestion_academica
-DB_USER=root
-DB_PASS=tu_password
-
-LDAP_HOST=ldap://tu-servidor-ldap
-LDAP_PORT=389
-LDAP_BASE_DN=dc=universidad,dc=edu,dc=mx
-
-JWT_SECRET=tu_secreto_seguro_aqui
-```
-
-### 4️⃣ Configurar Frontend
+### 4. Iniciar Frontend
 
 ```bash
 cd frontend
-
-# Instalar dependencias
 npm install
-
-# Configurar API endpoint
-# Editar src/environments/environment.ts
-
-# Modo desarrollo
 ng serve
-
-# La aplicación estará disponible en http://localhost:4200/
 ```
 
-### 5️⃣ Iniciar el Backend
+### 5. ¡Listo!
 
-```bash
-cd backend
-
-# Opción 1: PHP Built-in Server (desarrollo)
-php -S localhost:8000
-
-# Opción 2: WAMP/XAMPP/MAMP
-# Configurar Virtual Host apuntando a la carpeta backend
-
-# Opción 3: Docker (si aplica)
-docker-compose up
-```
-
-### 6️⃣ Verificar Instalación
-
-1. Accede a `http://localhost:4200/`
-2. Inicia sesión con credenciales LDAP institucionales
-3. Verifica que los módulos carguen correctamente
+Abre `http://localhost:4200` en tu navegador.
 
 ---
 
-## 🗄️ Modelo de Datos
-
-### Entidades Principales
+## 📁 Estructura del Proyecto
 
 ```
-┌─────────────┐       ┌──────────────┐       ┌─────────────┐
-│   Usuario   │───────│     Rol      │───────│   Permiso   │
-├─────────────┤       ├──────────────┤       ├─────────────┤
-│ id          │       │ id           │       │ id          │
-│ email       │       │ nombre       │       │ scope       │
-│ nombre      │       └──────────────┘       │ action      │
-│ rol_id (FK) │                              └─────────────┘
-└──────┬──────┘
-       │
-       │ 1:1
-       │
-┌──────▼──────┐       ┌──────────────┐       ┌─────────────┐
-│   Docente   │───────│   Academia   │       │ Incidencia  │
-├─────────────┤       ├──────────────┤       ├─────────────┤
-│ id          │       │ id           │       │ id          │
-│ usuario_id  │       │ nombre       │       │ tipo        │
-│ grados      │       │ descripcion  │       │ profesor_id │
-│ idioma      │       └──────────────┘       │ curso_id    │
-│ sni         │                              │ prioridad   │
-│ cv_link     │                              │ sla         │
-│ estatus     │                              │ asignado_a  │
-│ academia_id │                              │ evidencias  │
-└─────────────┘                              │ status      │
-                                             └─────────────┘
+gestion-academica/
+├── 📂 backend/
+│   ├── 📂 api/           # Endpoints REST
+│   ├── 📂 auth/          # JWT & LDAP handlers
+│   ├── 📂 config/        # Configuración DB & env
+│   ├── 📂 models/        # Modelos de datos
+│   └── 📂 utils/         # Utilidades (XLSX export)
+│
+├── 📂 database/
+│   └── 📄 schema.sql     # Schema completo (19 tablas)
+│
+├── 📂 frontend/
+│   └── 📂 src/app/
+│       ├── 📂 dashboard/     # KPIs y gráficas
+│       ├── 📂 docentes/      # CRUD docentes
+│       ├── 📂 incidencias/   # Sistema de tickets
+│       ├── 📂 evaluaciones/  # Evaluación docente
+│       ├── 📂 cursos/        # Gestión de materias
+│       └── 📂 services/      # API & PDF services
+│
+└── 📄 README.md
 ```
 
-### Relaciones Clave
+---
 
-- **Usuario - Rol:** Muchos a uno (varios usuarios pueden tener el mismo rol)
-- **Rol - Permiso:** Muchos a muchos (tabla intermedia `rol_permiso`)
-- **Usuario - Docente:** Uno a uno (un usuario puede ser docente)
-- **Docente - Academia:** Muchos a uno (varios docentes pertenecen a una academia)
-- **Incidencia - Docente:** Muchos a uno (varias incidencias pueden estar asociadas a un docente)
+## 📊 Modelo de Datos
+
+El sistema cuenta con **19 tablas** organizadas en módulos:
+
+| Módulo | Tablas |
+|--------|--------|
+| **Usuarios** | `rol`, `usuario`, `permiso`, `rol_permiso` |
+| **Docentes** | `docente`, `academia`, `docente_academia`, `area_especialidad`, `docente_area_especialidad` |
+| **Cursos** | `curso`, `docente_curso`, `periodo_academico` |
+| **Incidencias** | `tipo_incidencia`, `incidencia`, `incidencia_historial` |
+| **Evaluaciones** | `criterio_evaluacion`, `periodo_evaluacion`, `evaluacion_docente`, `evaluacion_detalle` |
 
 ---
 
-## 👥 Sistema de Roles y Permisos
+## 🔑 API Endpoints
 
-### Matriz de Permisos
-
-| Rol | Docentes | Incidencias | Reportes | Usuarios | Academias |
-|-----|----------|-------------|----------|----------|-----------|
-| **Admin** | CRUD completo | CRUD completo | Ver y exportar | Gestionar | Gestionar |
-| **Secretario Académico** | Ver, crear, editar | CRUD completo | Ver y exportar | - | Ver |
-| **Jefe de Academia** | Ver (su academia) | Crear, ver | Ver (su academia) | - | Ver (su academia) |
-| **Director** | Ver | Ver | Ver y exportar | - | Ver |
-| **Docente** | Ver (propio perfil) | Ver (asignadas) | - | - | - |
-
-### Permisos Detallados
-
-**Admin:**
-- Acceso total al sistema
-- Gestión de usuarios y roles
-- Configuración del sistema
-
-**Secretario Académico:**
-- Gestión completa de docentes
-- Gestión completa de incidencias
-- Generación de reportes
-- Consulta de información de todas las academias
-
-**Jefe de Academia:**
-- Consulta de docentes de su academia
-- Creación y seguimiento de incidencias
-- Reportes de su academia
-
-**Director:**
-- Dashboards ejecutivos
-- Reportes consolidados
-- Exportación de información
-
-**Docente:**
-- Visualización de perfil propio
-- Consulta de incidencias asignadas
-- Actualización de información personal
+| Módulo | Endpoint | Métodos |
+|--------|----------|---------|
+| Auth | `/api/auth.php` | POST (login, refresh, logout) |
+| Docentes | `/api/docentes.php` | GET, POST, PUT, DELETE |
+| Incidencias | `/api/incidencias.php` | GET, POST, PUT, DELETE |
+| Cursos | `/api/cursos.php` | GET, POST, PUT, DELETE |
+| Evaluaciones | `/api/evaluaciones.php` | GET, POST, PUT, DELETE |
+| Reportes | `/api/reportes.php` | GET (múltiples tipos) |
+| Upload | `/api/upload.php` | POST, GET, DELETE |
 
 ---
 
-## 👨‍💻 Equipo de Desarrollo
+## 👥 Roles y Permisos
 
-Este proyecto fue desarrollado por:
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="https://github.com/gaelgm03.png?size=100" width="100px;" alt="Gael Guzmán"/><br />
-      <sub><b>Gael Guzmán</b></sub><br />
-      <sub>Frontend Developer</sub><br />
-      <sub>Angular · TypeScript · UI/UX</sub>
-    </td>
-    <td align="center">
-      <img src="https://github.com/rogelionava.png?size=100" width="100px;" alt="Rogelio Nava"/><br />
-      <sub><b>Rogelio Nava</b></sub><br />
-      <sub>Backend Developer</sub><br />
-      <sub>PHP · API REST · LDAP</sub>
-    </td>
-    <td align="center">
-      <img src="https://github.com/antonioannese.png?size=100" width="100px;" alt="Antonio Annese"/><br />
-      <sub><b>Antonio Annese</b></sub><br />
-      <sub>Database Engineer</sub><br />
-      <sub>MySQL · Data Modeling</sub>
-    </td>
-  </tr>
-</table>
+| Rol | Docentes | Incidencias | Reportes | Usuarios |
+|:---:|:--------:|:-----------:|:--------:|:--------:|
+| **Admin** | ✅ CRUD | ✅ CRUD | ✅ Export | ✅ Gestionar |
+| **Academia** | 👁️ Ver | ✅ CRUD | ✅ Export | ❌ |
+| **Dirección** | 👁️ Ver | 👁️ Ver | ✅ Export | ❌ |
+| **Docente** | 👁️ Propio | 📝 Crear | ❌ | ❌ |
+| **Coordinador** | ✏️ Editar | ✅ CRUD | ✅ Export | ❌ |
 
 ---
 
-## 📄 Licencia
+## 🤝 Contribuir
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
-
----
-
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas. Por favor:
+¡Las contribuciones son bienvenidas! 
 
 1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add: nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
+2. Crea tu rama (`git checkout -b feature/NuevaCaracteristica`)
+3. Commit tus cambios (`git commit -m 'Add: nueva característica'`)
+4. Push a la rama (`git push origin feature/NuevaCaracteristica`)
 5. Abre un Pull Request
 
 ---
 
-## 📞 Contacto
+## 📝 Licencia
 
-Para consultas o soporte, contacta al equipo de desarrollo a través de los issues de GitHub.
+Distribuido bajo la Licencia MIT. Ver [`LICENSE`](LICENSE) para más información.
+
+---
+
+## 👨‍💻 Autor
+
+<div align="center">
+
+[![GitHub](https://img.shields.io/badge/-@gaelgm03-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/gaelgm03)
+
+**Gael Guzmán**
+
+*Full Stack Developer*
+
+</div>
 
 ---
 
 <div align="center">
-  <p>Desarrollado con ❤️ por el equipo de Gestión Académica</p>
-  <p>© 2025 - Universidad Panamericana</p>
+
+⭐ **Si este proyecto te fue útil, considera darle una estrella** ⭐
+
 </div>

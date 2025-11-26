@@ -113,6 +113,57 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+// ========== REPORTE POR MATERIA ==========
+export interface CursoConIncidencias {
+  id: number;
+  codigo: string;
+  materia: string;
+  academia?: string;
+  semestre?: number;
+  modalidad?: string;
+  total_incidencias: number;
+  incidencias_abiertas: number;
+  incidencias_en_proceso: number;
+  incidencias_cerradas: number;
+  prioridad_alta: number;
+  prioridad_media: number;
+  prioridad_baja: number;
+}
+
+export interface CursoConDocentes {
+  id: number;
+  codigo: string;
+  materia: string;
+  academia?: string;
+  total_docentes: number;
+  promedio_evaluacion?: number;
+  total_evaluaciones: number;
+}
+
+export interface TopMateriaEvaluacion {
+  codigo: string;
+  materia: string;
+  promedio: number;
+  total_evaluaciones: number;
+  calificacion_min: number;
+  calificacion_max: number;
+}
+
+export interface ReportePorMateria {
+  periodo: PeriodoInfo;
+  resumen: {
+    total_cursos: number;
+    cursos_activos: number;
+    cursos_inactivos: number;
+  };
+  cursos_con_incidencias: CursoConIncidencias[];
+  cursos_con_docentes: CursoConDocentes[];
+  distribucion_modalidad: Array<{ modalidad: string; cantidad: number }>;
+  distribucion_academia: Array<{ academia: string; cantidad: number }>;
+  distribucion_semestre: Array<{ semestre: number; cantidad: number }>;
+  top_por_evaluacion: TopMateriaEvaluacion[];
+}
+
 // ========== CURSOS ==========
 export interface Curso {
   id?: number;
@@ -369,10 +420,25 @@ export class ApiService {
     return this.http.get<ApiResponse<Dashboard>>(`${API_URL}/api/reportes.php`, { params });
   }
 
-  // URLs para exportación CSV (se abren directamente en el navegador)
-  getExportUrl(tipo: 'incidencias' | 'docentes' | 'estadisticas', periodo: string = 'todo', fechaInicio?: string, fechaFin?: string): string {
+  // Reporte por Materia (Requisito MVP)
+  getReportePorMateria(periodo: string = 'todo', fechaInicio?: string, fechaFin?: string): Observable<ApiResponse<ReportePorMateria>> {
+    let params = new HttpParams().set('tipo', 'reporte_por_materia').set('periodo', periodo);
+    if (fechaInicio) params = params.set('fecha_inicio', fechaInicio);
+    if (fechaFin) params = params.set('fecha_fin', fechaFin);
+    return this.http.get<ApiResponse<ReportePorMateria>>(`${API_URL}/api/reportes.php`, { params });
+  }
+
+  // URLs para exportación (se abren directamente en el navegador)
+  getExportUrl(
+    tipo: 'incidencias' | 'docentes' | 'estadisticas' | 'materias', 
+    periodo: string = 'todo', 
+    fechaInicio?: string, 
+    fechaFin?: string,
+    formato: 'csv' | 'xlsx' = 'csv'
+  ): string {
     const token = localStorage.getItem('access_token');
-    let url = `${API_URL}/api/reportes.php?tipo=exportar_${tipo}&periodo=${periodo}`;
+    const suffix = formato === 'xlsx' ? '_xlsx' : '';
+    let url = `${API_URL}/api/reportes.php?tipo=exportar_${tipo}${suffix}&periodo=${periodo}`;
     if (fechaInicio) url += `&fecha_inicio=${fechaInicio}`;
     if (fechaFin) url += `&fecha_fin=${fechaFin}`;
     if (token) url += `&token=${encodeURIComponent(token)}`;

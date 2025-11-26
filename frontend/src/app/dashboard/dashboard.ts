@@ -238,23 +238,23 @@ export class Dashboard implements OnInit {
     return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
   }
 
-  // Exportación CSV
-  exportarIncidencias() {
+  // Exportación CSV/XLSX
+  exportarIncidencias(formato: 'csv' | 'xlsx' = 'csv') {
     const fechaInicio = this.selectedPeriodo === 'personalizado' ? this.fechaInicio : undefined;
     const fechaFin = this.selectedPeriodo === 'personalizado' ? this.fechaFin : undefined;
-    const url = this.apiService.getExportUrl('incidencias', this.selectedPeriodo, fechaInicio, fechaFin);
+    const url = this.apiService.getExportUrl('incidencias', this.selectedPeriodo, fechaInicio, fechaFin, formato);
     window.open(url, '_blank');
   }
 
-  exportarDocentes() {
-    const url = this.apiService.getExportUrl('docentes');
+  exportarDocentes(formato: 'csv' | 'xlsx' = 'csv') {
+    const url = this.apiService.getExportUrl('docentes', 'todo', undefined, undefined, formato);
     window.open(url, '_blank');
   }
 
-  exportarEstadisticas() {
+  exportarEstadisticas(formato: 'csv' | 'xlsx' = 'csv') {
     const fechaInicio = this.selectedPeriodo === 'personalizado' ? this.fechaInicio : undefined;
     const fechaFin = this.selectedPeriodo === 'personalizado' ? this.fechaFin : undefined;
-    const url = this.apiService.getExportUrl('estadisticas', this.selectedPeriodo, fechaInicio, fechaFin);
+    const url = this.apiService.getExportUrl('estadisticas', this.selectedPeriodo, fechaInicio, fechaFin, formato);
     window.open(url, '_blank');
   }
 
