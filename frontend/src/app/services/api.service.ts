@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-const API_URL = 'http://localhost/EXAMEN%20FINAL/backend';
+const API_URL = 'http://localhost/gestion_academica/backend';
 
 export interface Docente {
   id?: number;

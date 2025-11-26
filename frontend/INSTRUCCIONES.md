@@ -9,12 +9,12 @@
    ```
 
 2. **Configurar la URL del API:**
-   - Edita el archivo `src/app/services/api.service.ts`
-   - Ajusta la constante `API_URL` según tu configuración:
+   - La URL del API ya está configurada en `src/app/services/api.service.ts`
+   - URL actual:
      ```typescript
-     const API_URL = 'http://localhost/EXAMEN%20FINAL/backend';
+     const API_URL = 'http://localhost/gestion_academica/backend';
      ```
-   - Si usas otro puerto o ruta, cámbiala aquí
+   - Si tu proyecto está en otra ruta, ajusta la URL en este archivo
 
 3. **Asegúrate de que el backend PHP esté corriendo:**
    - El backend debe estar accesible en la URL configurada
