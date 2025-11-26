@@ -36,28 +36,39 @@ function jsonResponse($success, $message, $data = null, $code = 200) {
 // Inicializar modelo
 $docenteModel = new Docente($pdo);
 
-// Obtener método HTTP y parsear la ruta
+// Obtener método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$pathParts = explode('/', trim($path, '/'));
 
-// Determinar si hay un ID en la URL
-// Formato esperado: /api/docentes o /api/docentes/123 o /api/docentes/stats
+// Determinar ID y acción desde query params o path
 $id = null;
 $action = null;
 
-// Buscar 'docentes' en la ruta y verificar si hay algo después
-$docentesIndex = array_search('docentes.php', $pathParts);
-if ($docentesIndex === false) {
-    $docentesIndex = array_search('docentes', $pathParts);
+// Priorizar query params (docentes.php?id=123)
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $id = (int)$_GET['id'];
 }
 
-if ($docentesIndex !== false && isset($pathParts[$docentesIndex + 1])) {
-    $nextPart = $pathParts[$docentesIndex + 1];
-    if (is_numeric($nextPart)) {
-        $id = (int)$nextPart;
-    } else {
-        $action = $nextPart;
+if (isset($_GET['action'])) {
+    $action = $_GET['action'];
+}
+
+// Si no hay query params, parsear el path (para URL rewriting)
+if ($id === null && $action === null) {
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $pathParts = explode('/', trim($path, '/'));
+    
+    $docentesIndex = array_search('docentes.php', $pathParts);
+    if ($docentesIndex === false) {
+        $docentesIndex = array_search('docentes', $pathParts);
+    }
+    
+    if ($docentesIndex !== false && isset($pathParts[$docentesIndex + 1])) {
+        $nextPart = $pathParts[$docentesIndex + 1];
+        if (is_numeric($nextPart)) {
+            $id = (int)$nextPart;
+        } else {
+            $action = $nextPart;
+        }
     }
 }
 
@@ -139,6 +150,11 @@ try {
                 } else {
                     jsonResponse(false, 'No se pudo actualizar el docente', null, 400);
                 }
+            } catch (PDOException $e) {
+                if ($e->getCode() == 23000) {
+                    jsonResponse(false, 'El email ya está registrado por otro usuario', null, 409);
+                }
+                throw $e;
             } catch (Exception $e) {
                 if (strpos($e->getMessage(), 'no encontrado') !== false) {
                     jsonResponse(false, $e->getMessage(), null, 404);

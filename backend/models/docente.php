@@ -65,10 +65,12 @@ class Docente {
         // Filtro de búsqueda (debe ir después del GROUP BY para usar HAVING)
         if (isset($filters['search']) && $filters['search'] !== '') {
             $sql .= " HAVING 
-                u.nombre LIKE :search 
-                OR u.email LIKE :search 
-                OR d.grados LIKE :search
-                OR academias LIKE :search
+                CONCAT(
+                    COALESCE(u.nombre, ''), ' ', 
+                    COALESCE(u.email, ''), ' ', 
+                    COALESCE(d.grados, ''), ' ', 
+                    COALESCE(academias, '')
+                ) LIKE :search
             ";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
@@ -189,22 +191,25 @@ class Docente {
                 throw new Exception("Docente no encontrado");
             }
             
-            // 2. Actualizar usuario si hay datos
-            if (isset($data['email']) || isset($data['nombre'])) {
-                $sqlUsuario = "UPDATE usuario SET ";
-                $paramsUsuario = [];
-                $updates = [];
-                
-                if (isset($data['email'])) {
-                    $updates[] = "email = :email";
-                    $paramsUsuario[':email'] = $data['email'];
-                }
-                
-                if (isset($data['nombre'])) {
-                    $updates[] = "nombre = :nombre";
-                    $paramsUsuario[':nombre'] = $data['nombre'];
-                }
-                
+            // 2. Actualizar usuario si hay datos diferentes
+            $sqlUsuario = "UPDATE usuario SET ";
+            $paramsUsuario = [];
+            $updates = [];
+            
+            // Solo actualizar email si cambió
+            if (isset($data['email']) && $data['email'] !== $docente['email']) {
+                $updates[] = "email = :email";
+                $paramsUsuario[':email'] = $data['email'];
+            }
+            
+            // Solo actualizar nombre si cambió
+            if (isset($data['nombre']) && $data['nombre'] !== $docente['nombre']) {
+                $updates[] = "nombre = :nombre";
+                $paramsUsuario[':nombre'] = $data['nombre'];
+            }
+            
+            // Ejecutar UPDATE solo si hay cambios
+            if (!empty($updates)) {
                 $sqlUsuario .= implode(', ', $updates) . " WHERE id = :id";
                 $paramsUsuario[':id'] = $docente['id_usuario'];
                 

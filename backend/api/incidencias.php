@@ -36,27 +36,39 @@ function jsonResponse($success, $message, $data = null, $code = 200) {
 // Inicializar modelo
 $incidenciaModel = new Incidencia($pdo);
 
-// Obtener método HTTP y parsear la ruta
+// Obtener método HTTP
 $method = $_SERVER['REQUEST_METHOD'];
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$pathParts = explode('/', trim($path, '/'));
 
-// Determinar si hay un ID en la URL
+// Determinar ID y acción desde query params o path
 $id = null;
 $action = null;
 
-// Buscar 'incidencias' en la ruta
-$incidenciasIndex = array_search('incidencias.php', $pathParts);
-if ($incidenciasIndex === false) {
-    $incidenciasIndex = array_search('incidencias', $pathParts);
+// Priorizar query params (incidencias.php?id=123)
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $id = (int)$_GET['id'];
 }
 
-if ($incidenciasIndex !== false && isset($pathParts[$incidenciasIndex + 1])) {
-    $nextPart = $pathParts[$incidenciasIndex + 1];
-    if (is_numeric($nextPart)) {
-        $id = (int)$nextPart;
-    } else {
-        $action = $nextPart;
+if (isset($_GET['action'])) {
+    $action = $_GET['action'];
+}
+
+// Si no hay query params, parsear el path (para URL rewriting)
+if ($id === null && $action === null) {
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $pathParts = explode('/', trim($path, '/'));
+    
+    $incidenciasIndex = array_search('incidencias.php', $pathParts);
+    if ($incidenciasIndex === false) {
+        $incidenciasIndex = array_search('incidencias', $pathParts);
+    }
+    
+    if ($incidenciasIndex !== false && isset($pathParts[$incidenciasIndex + 1])) {
+        $nextPart = $pathParts[$incidenciasIndex + 1];
+        if (is_numeric($nextPart)) {
+            $id = (int)$nextPart;
+        } else {
+            $action = $nextPart;
+        }
     }
 }
 

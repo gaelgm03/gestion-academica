@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 
 const API_URL = 'http://localhost/gestion_academica/backend';
 
+// NOTA: Si hay problemas con .htaccess, usar estas URLs directas:
+// const API_URL_DOCENTES = 'http://localhost/gestion_academica/backend/api/docentes.php';
+// const API_URL_INCIDENCIAS = 'http://localhost/gestion_academica/backend/api/incidencias.php';
+// const API_URL_REPORTES = 'http://localhost/gestion_academica/backend/api/reportes.php';
+
 export interface Docente {
   id?: number;
   id_usuario?: number;
@@ -75,27 +80,27 @@ export class ApiService {
         }
       });
     }
-    return this.http.get<ApiResponse<Docente[]>>(`${API_URL}/api/docentes`, { params });
+    return this.http.get<ApiResponse<Docente[]>>(`${API_URL}/api/docentes.php`, { params });
   }
 
   getDocente(id: number): Observable<ApiResponse<Docente>> {
-    return this.http.get<ApiResponse<Docente>>(`${API_URL}/api/docentes/${id}`);
+    return this.http.get<ApiResponse<Docente>>(`${API_URL}/api/docentes.php?id=${id}`);
   }
 
   createDocente(docente: Docente): Observable<ApiResponse<Docente>> {
-    return this.http.post<ApiResponse<Docente>>(`${API_URL}/api/docentes`, docente);
+    return this.http.post<ApiResponse<Docente>>(`${API_URL}/api/docentes.php`, docente);
   }
 
   updateDocente(id: number, docente: Partial<Docente>): Observable<ApiResponse<Docente>> {
-    return this.http.put<ApiResponse<Docente>>(`${API_URL}/api/docentes/${id}`, docente);
+    return this.http.put<ApiResponse<Docente>>(`${API_URL}/api/docentes.php?id=${id}`, docente);
   }
 
   deleteDocente(id: number): Observable<ApiResponse<null>> {
-    return this.http.delete<ApiResponse<null>>(`${API_URL}/api/docentes/${id}`);
+    return this.http.delete<ApiResponse<null>>(`${API_URL}/api/docentes.php?id=${id}`);
   }
 
   getDocentesStats(): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${API_URL}/api/docentes/stats`);
+    return this.http.get<ApiResponse<any>>(`${API_URL}/api/docentes.php?action=stats`);
   }
 
   // ========== INCIDENCIAS ==========
@@ -117,32 +122,32 @@ export class ApiService {
         }
       });
     }
-    return this.http.get<ApiResponse<Incidencia[]>>(`${API_URL}/api/incidencias`, { params });
+    return this.http.get<ApiResponse<Incidencia[]>>(`${API_URL}/api/incidencias.php`, { params });
   }
 
   getIncidencia(id: number): Observable<ApiResponse<Incidencia>> {
-    return this.http.get<ApiResponse<Incidencia>>(`${API_URL}/api/incidencias/${id}`);
+    return this.http.get<ApiResponse<Incidencia>>(`${API_URL}/api/incidencias.php?id=${id}`);
   }
 
   createIncidencia(incidencia: Incidencia): Observable<ApiResponse<Incidencia>> {
-    return this.http.post<ApiResponse<Incidencia>>(`${API_URL}/api/incidencias`, incidencia);
+    return this.http.post<ApiResponse<Incidencia>>(`${API_URL}/api/incidencias.php`, incidencia);
   }
 
   updateIncidencia(id: number, incidencia: Partial<Incidencia>): Observable<ApiResponse<Incidencia>> {
-    return this.http.put<ApiResponse<Incidencia>>(`${API_URL}/api/incidencias/${id}`, incidencia);
+    return this.http.put<ApiResponse<Incidencia>>(`${API_URL}/api/incidencias.php?id=${id}`, incidencia);
   }
 
   deleteIncidencia(id: number): Observable<ApiResponse<null>> {
-    return this.http.delete<ApiResponse<null>>(`${API_URL}/api/incidencias/${id}`);
+    return this.http.delete<ApiResponse<null>>(`${API_URL}/api/incidencias.php?id=${id}`);
   }
 
   getIncidenciasStats(): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${API_URL}/api/incidencias/stats`);
+    return this.http.get<ApiResponse<any>>(`${API_URL}/api/incidencias.php?action=stats`);
   }
 
   // ========== REPORTES ==========
   getDashboard(): Observable<ApiResponse<Dashboard>> {
-    return this.http.get<ApiResponse<Dashboard>>(`${API_URL}/api/reportes?tipo=dashboard`);
+    return this.http.get<ApiResponse<Dashboard>>(`${API_URL}/api/reportes.php?tipo=dashboard`);
   }
 }
 

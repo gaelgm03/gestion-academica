@@ -126,6 +126,8 @@ export class Incidencias implements OnInit {
       this.apiService.updateIncidencia(this.editingIncidencia.id, this.formData).subscribe({
         next: (response) => {
           if (response.success) {
+            alert('✓ Incidencia actualizada exitosamente');
+            console.log('Incidencia actualizada:', response.data);
             this.loadIncidencias();
             this.closeForm();
           } else {
@@ -133,7 +135,8 @@ export class Incidencias implements OnInit {
           }
         },
         error: (err) => {
-          alert('Error al actualizar: ' + (err.message || 'Error desconocido'));
+          const errorMsg = err.error?.message || err.message || 'Error desconocido';
+          alert('Error al actualizar: ' + errorMsg);
           console.error('Error:', err);
         }
       });
@@ -142,6 +145,8 @@ export class Incidencias implements OnInit {
       this.apiService.createIncidencia(this.formData).subscribe({
         next: (response) => {
           if (response.success) {
+            alert('✓ Incidencia creada exitosamente');
+            console.log('Incidencia creada:', response.data);
             this.loadIncidencias();
             this.closeForm();
           } else {
@@ -149,7 +154,8 @@ export class Incidencias implements OnInit {
           }
         },
         error: (err) => {
-          alert('Error al crear: ' + (err.message || 'Error desconocido'));
+          const errorMsg = err.error?.message || err.message || 'Error desconocido';
+          alert('Error al crear: ' + errorMsg);
           console.error('Error:', err);
         }
       });
@@ -161,13 +167,16 @@ export class Incidencias implements OnInit {
       this.apiService.deleteIncidencia(id).subscribe({
         next: (response) => {
           if (response.success) {
+            alert('✓ Incidencia eliminada exitosamente');
+            console.log('Incidencia eliminada');
             this.loadIncidencias();
           } else {
             alert('Error: ' + response.message);
           }
         },
         error: (err) => {
-          alert('Error al eliminar: ' + (err.message || 'Error desconocido'));
+          const errorMsg = err.error?.message || err.message || 'Error desconocido';
+          alert('Error al eliminar: ' + errorMsg);
           console.error('Error:', err);
         }
       });

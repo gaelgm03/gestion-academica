@@ -16,7 +16,8 @@ export class Docentes implements OnInit {
   showForm = false;
   editingDocente: Docente | null = null;
   formData: Docente = {
-    id_usuario: undefined,
+    nombre: '',
+    email: '',
     grados: '',
     idioma: '',
     sni: false,
@@ -69,7 +70,8 @@ export class Docentes implements OnInit {
     } else {
       this.editingDocente = null;
       this.formData = {
-        id_usuario: undefined,
+        nombre: '',
+        email: '',
         grados: '',
         idioma: '',
         sni: false,
@@ -84,7 +86,8 @@ export class Docentes implements OnInit {
     this.showForm = false;
     this.editingDocente = null;
     this.formData = {
-      id_usuario: undefined,
+      nombre: '',
+      email: '',
       grados: '',
       idioma: '',
       sni: false,
@@ -94,8 +97,8 @@ export class Docentes implements OnInit {
   }
 
   saveDocente() {
-    if (!this.formData.id_usuario) {
-      alert('El ID de usuario es requerido');
+    if (!this.formData.nombre || !this.formData.email) {
+      alert('Nombre y email son requeridos');
       return;
     }
 
@@ -104,6 +107,8 @@ export class Docentes implements OnInit {
       this.apiService.updateDocente(this.editingDocente.id, this.formData).subscribe({
         next: (response) => {
           if (response.success) {
+            alert('✓ Docente actualizado exitosamente');
+            console.log('Docente actualizado:', response.data);
             this.loadDocentes();
             this.closeForm();
           } else {
@@ -111,7 +116,8 @@ export class Docentes implements OnInit {
           }
         },
         error: (err) => {
-          alert('Error al actualizar: ' + (err.message || 'Error desconocido'));
+          const errorMsg = err.error?.message || err.message || 'Error desconocido';
+          alert('Error al actualizar: ' + errorMsg);
           console.error('Error:', err);
         }
       });
@@ -120,6 +126,8 @@ export class Docentes implements OnInit {
       this.apiService.createDocente(this.formData).subscribe({
         next: (response) => {
           if (response.success) {
+            alert('✓ Docente creado exitosamente');
+            console.log('Docente creado:', response.data);
             this.loadDocentes();
             this.closeForm();
           } else {
@@ -127,7 +135,8 @@ export class Docentes implements OnInit {
           }
         },
         error: (err) => {
-          alert('Error al crear: ' + (err.message || 'Error desconocido'));
+          const errorMsg = err.error?.message || err.message || 'Error desconocido';
+          alert('Error al crear: ' + errorMsg);
           console.error('Error:', err);
         }
       });
@@ -139,13 +148,16 @@ export class Docentes implements OnInit {
       this.apiService.deleteDocente(id).subscribe({
         next: (response) => {
           if (response.success) {
+            alert('✓ Docente eliminado exitosamente');
+            console.log('Docente eliminado');
             this.loadDocentes();
           } else {
             alert('Error: ' + response.message);
           }
         },
         error: (err) => {
-          alert('Error al eliminar: ' + (err.message || 'Error desconocido'));
+          const errorMsg = err.error?.message || err.message || 'Error desconocido';
+          alert('Error al eliminar: ' + errorMsg);
           console.error('Error:', err);
         }
       });
