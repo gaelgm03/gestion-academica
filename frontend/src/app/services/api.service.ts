@@ -155,6 +155,7 @@ export interface ReportePorMateria {
     total_cursos: number;
     cursos_activos: number;
     cursos_inactivos: number;
+    total_incidencias_periodo: number;
   };
   cursos_con_incidencias: CursoConIncidencias[];
   cursos_con_docentes: CursoConDocentes[];
@@ -523,6 +524,10 @@ export class ApiService {
       url += `&search=${encodeURIComponent(search)}`;
     }
     return this.http.get<ApiResponse<Curso[]>>(url);
+  }
+
+  getAcademias(): Observable<ApiResponse<{ id: number; nombre: string }[]>> {
+    return this.http.get<ApiResponse<{ id: number; nombre: string }[]>>(`${API_URL}/api/cursos.php?action=academias`);
   }
 
   // ========== PERÍODOS ACADÉMICOS ==========

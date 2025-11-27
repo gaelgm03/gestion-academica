@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartData, ChartType, registerables } from 'chart.js';
 import { ApiService, ReportePorMateria, Periodo, CursoConIncidencias, CursoConDocentes, TopMateriaEvaluacion } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 
 // Registrar componentes de Chart.js
 Chart.register(...registerables);
@@ -93,7 +94,15 @@ export class ReporteMaterias implements OnInit {
     }
   };
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService
+  ) {}
+
+  // Métodos de permisos
+  canExport(): boolean {
+    return this.authService.hasPermission('reporte', 'exportar');
+  }
 
   ngOnInit() {
     this.loadPeriodos();

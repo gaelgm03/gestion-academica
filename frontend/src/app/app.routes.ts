@@ -21,13 +21,13 @@ export const routes: Routes = [
     path: 'docentes', 
     component: Docentes, 
     canActivate: [AuthGuard],
-    data: { roles: ['admin', 'academia', 'coordinador'] }
+    data: { roles: ['admin', 'academia', 'direccion', 'docente', 'coordinador'] }
   },
   { 
     path: 'incidencias', 
     component: Incidencias, 
     canActivate: [AuthGuard],
-    data: { roles: ['admin', 'academia', 'coordinador'] }
+    data: { roles: ['admin', 'academia', 'direccion', 'docente', 'coordinador'] }
   },
   { 
     path: 'cursos', 
@@ -39,13 +39,13 @@ export const routes: Routes = [
     path: 'evaluaciones', 
     component: Evaluaciones, 
     canActivate: [AuthGuard],
-    data: { roles: ['admin', 'academia', 'coordinador'] }
+    data: { roles: ['admin', 'academia', 'direccion', 'docente', 'coordinador'] }
   },
   { 
     path: 'reporte-materias', 
     component: ReporteMaterias, 
     canActivate: [AuthGuard],
-    data: { roles: ['admin', 'academia', 'direccion', 'coordinador'] }
+    data: { roles: ['admin', 'academia', 'direccion', 'docente', 'coordinador'] }
   },
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: '/dashboard' }

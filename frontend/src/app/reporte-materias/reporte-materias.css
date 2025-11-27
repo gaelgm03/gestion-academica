@@ -192,6 +192,11 @@
   border-left-color: #9e9e9e;
 }
 
+.kpi-card.highlight {
+  border-left-color: #ff9800;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+}
+
 .kpi-value {
   font-size: 2.2rem;
   font-weight: 700;

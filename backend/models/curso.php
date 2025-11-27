@@ -67,10 +67,14 @@ class Curso {
             $params[':modalidad'] = $filters['modalidad'];
         }
         
-        // Filtro de búsqueda
+        // Filtro de búsqueda (código, nombre, descripción Y academia)
         if (isset($filters['search']) && $filters['search'] !== '') {
-            $sql .= " AND (c.codigo LIKE :search OR c.nombre LIKE :search OR c.descripcion LIKE :search)";
-            $params[':search'] = '%' . $filters['search'] . '%';
+            $searchTerm = '%' . $filters['search'] . '%';
+            $sql .= " AND (c.codigo LIKE :search1 OR c.nombre LIKE :search2 OR c.descripcion LIKE :search3 OR a.nombre LIKE :search4)";
+            $params[':search1'] = $searchTerm;
+            $params[':search2'] = $searchTerm;
+            $params[':search3'] = $searchTerm;
+            $params[':search4'] = $searchTerm;
         }
         
         $sql .= " ORDER BY c.codigo ASC";
@@ -163,6 +167,15 @@ class Curso {
             throw new Exception("Curso no encontrado");
         }
         
+        // Verificar si el código ya existe en OTRO curso (no en este)
+        if (isset($data['codigo']) && $data['codigo'] !== $curso['codigo']) {
+            $stmt = $this->pdo->prepare("SELECT id FROM curso WHERE codigo = ? AND id != ?");
+            $stmt->execute([$data['codigo'], $id]);
+            if ($stmt->fetch()) {
+                throw new PDOException("El código del curso ya existe", 23000);
+            }
+        }
+        
         $sql = "
             UPDATE curso SET
                 codigo = :codigo,
@@ -185,9 +198,9 @@ class Curso {
             ':descripcion' => $data['descripcion'] ?? $curso['descripcion'],
             ':creditos' => $data['creditos'] ?? $curso['creditos'],
             ':horas_semana' => $data['horas_semana'] ?? $curso['horas_semana'],
-            ':semestre' => $data['semestre'] ?? $curso['semestre'],
+            ':semestre' => isset($data['semestre']) ? $data['semestre'] : $curso['semestre'],
             ':modalidad' => $data['modalidad'] ?? $curso['modalidad'],
-            ':academia_id' => $data['academia_id'] ?? $curso['academia_id'],
+            ':academia_id' => isset($data['academia_id']) ? $data['academia_id'] : $curso['academia_id'],
             ':estatus' => $data['estatus'] ?? $curso['estatus']
         ]);
     }

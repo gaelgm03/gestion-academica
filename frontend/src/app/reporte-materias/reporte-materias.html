@@ -1,7 +1,7 @@
 <div class="reporte-materias-container">
   <div class="header">
     <h1>📚 Reporte por Materia</h1>
-    <div class="header-actions">
+    <div class="header-actions" *ngIf="canExport()">
       <button class="btn-export csv" (click)="exportarCSV()">📥 CSV</button>
       <button class="btn-export xlsx" (click)="exportarXLSX()">📊 Excel</button>
     </div>
@@ -59,13 +59,13 @@
         <div class="kpi-value">{{ reporteData.resumen.cursos_activos }}</div>
         <div class="kpi-label">Activas</div>
       </div>
-      <div class="kpi-card inactive">
-        <div class="kpi-value">{{ reporteData.resumen.cursos_inactivos }}</div>
-        <div class="kpi-label">Inactivas</div>
+      <div class="kpi-card highlight">
+        <div class="kpi-value">{{ reporteData.resumen.total_incidencias_periodo }}</div>
+        <div class="kpi-label">Incidencias (período)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-value">{{ reporteData.cursos_con_incidencias.length }}</div>
-        <div class="kpi-label">Con Incidencias</div>
+        <div class="kpi-label">Materias con Incidencias</div>
       </div>
     </div>
 
@@ -95,7 +95,7 @@
 
     <!-- Tab: Incidencias por Materia -->
     <div *ngIf="activeTab === 'incidencias'" class="tab-content">
-      <h3>Materias con Incidencias</h3>
+      <h3>Materias por Incidencias (ordenado de mayor a menor)</h3>
       <div class="table-container">
         <table>
           <thead>
@@ -124,8 +124,8 @@
               <td><span class="badge info">{{ curso.incidencias_en_proceso }}</span></td>
               <td><span class="badge success">{{ curso.incidencias_cerradas }}</span></td>
               <td>
-                <span *ngIf="curso.prioridad_alta > 0" class="badge danger">{{ curso.prioridad_alta }}</span>
-                <span *ngIf="curso.prioridad_alta === 0">-</span>
+                <span *ngIf="curso.prioridad_alta && curso.prioridad_alta > 0" class="badge danger">{{ curso.prioridad_alta }}</span>
+                <span *ngIf="!curso.prioridad_alta || curso.prioridad_alta == 0">-</span>
               </td>
             </tr>
             <tr *ngIf="reporteData.cursos_con_incidencias.length === 0">

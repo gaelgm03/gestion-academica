@@ -123,6 +123,11 @@ try {
             break;
             
         case 'POST':
+            // Verificar permiso para crear docentes
+            if (!$auth->hasPermission('docente', 'crear')) {
+                jsonResponse(false, 'No tienes permiso para crear docentes', null, 403);
+            }
+            
             // Crear un nuevo docente
             $data = json_decode(file_get_contents('php://input'), true);
             
@@ -148,6 +153,11 @@ try {
             break;
             
         case 'PUT':
+            // Verificar permiso para editar docentes
+            if (!$auth->hasPermission('docente', 'editar')) {
+                jsonResponse(false, 'No tienes permiso para editar docentes', null, 403);
+            }
+            
             // Actualizar un docente existente
             if (!$id) {
                 jsonResponse(false, 'ID de docente requerido', null, 400);
@@ -182,6 +192,11 @@ try {
             break;
             
         case 'DELETE':
+            // Verificar permiso para eliminar docentes
+            if (!$auth->hasPermission('docente', 'eliminar')) {
+                jsonResponse(false, 'No tienes permiso para eliminar docentes', null, 403);
+            }
+            
             // Eliminar (soft delete) un docente
             if (!$id) {
                 jsonResponse(false, 'ID de docente requerido', null, 400);

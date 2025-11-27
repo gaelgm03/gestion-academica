@@ -2,8 +2,8 @@
   <div class="header">
     <h1>Gestión de Docentes</h1>
     <div class="header-actions">
-      <button class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
-      <button class="btn-primary" (click)="openForm()">+ Nuevo Docente</button>
+      <button *ngIf="canExport()" class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
+      <button *ngIf="canCreate()" class="btn-primary" (click)="openForm()">+ Nuevo Docente</button>
     </div>
   </div>
 
@@ -86,8 +86,8 @@
           </td>
           <td class="actions">
             <button (click)="openDetail(docente)" class="btn-view">Ver</button>
-            <button (click)="openForm(docente)" class="btn-edit">Editar</button>
-            <button (click)="deleteDocente(docente.id!)" class="btn-delete">Eliminar</button>
+            <button *ngIf="canEditDocente(docente)" (click)="openForm(docente)" class="btn-edit">Editar</button>
+            <button *ngIf="canDelete()" (click)="deleteDocente(docente.id!)" class="btn-delete">Eliminar</button>
           </td>
         </tr>
         <tr *ngIf="docentes.length === 0">
@@ -210,9 +210,9 @@
       </div>
 
       <div class="detail-actions">
-        <button *ngIf="docenteEvaluaciones && docenteEvaluaciones.total_evaluaciones > 0" 
+        <button *ngIf="canExport() && docenteEvaluaciones && docenteEvaluaciones.total_evaluaciones > 0" 
                 (click)="exportarEvaluacionPdf()" class="btn-pdf">📄 Exportar Evaluación</button>
-        <button (click)="editFromDetail()" class="btn-primary">✏️ Editar Docente</button>
+        <button *ngIf="selectedDocente && canEditDocente(selectedDocente)" (click)="editFromDetail()" class="btn-primary">✏️ Editar Docente</button>
         <button (click)="closeDetail()" class="btn-secondary">Cerrar</button>
       </div>
     </div>

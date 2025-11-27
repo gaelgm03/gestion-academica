@@ -215,15 +215,28 @@ try {
             // Sanitizar nombre de archivo para prevenir path traversal
             $filename = basename($filename);
             
-            // Determinar ruta del archivo
-            $targetPath = $incidenciaId 
-                ? UPLOAD_DIR . "incidencia_{$incidenciaId}/{$filename}"
-                : UPLOAD_DIR . $filename;
-            
             $fileDeleted = false;
+            $targetPath = null;
             
-            // Intentar eliminar el archivo si existe
-            if (file_exists($targetPath)) {
+            // Buscar y eliminar archivo en múltiples ubicaciones posibles
+            if ($incidenciaId) {
+                // 1. Primero buscar en subdirectorio de incidencia
+                $pathInSubdir = UPLOAD_DIR . "incidencia_{$incidenciaId}/{$filename}";
+                if (file_exists($pathInSubdir)) {
+                    $targetPath = $pathInSubdir;
+                }
+            }
+            
+            // 2. Si no se encontró, buscar en la raíz de uploads
+            if (!$targetPath) {
+                $pathInRoot = UPLOAD_DIR . $filename;
+                if (file_exists($pathInRoot)) {
+                    $targetPath = $pathInRoot;
+                }
+            }
+            
+            // Intentar eliminar el archivo si se encontró
+            if ($targetPath && file_exists($targetPath)) {
                 if (unlink($targetPath)) {
                     $fileDeleted = true;
                 }

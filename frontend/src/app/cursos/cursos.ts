@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Curso, DocenteCurso, Docente, PeriodoAcademico } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 import { PdfService } from '../services/pdf.service';
 
 @Component({
@@ -64,7 +65,34 @@ export class Cursos implements OnInit {
     search: ''
   };
 
-  constructor(private apiService: ApiService, private pdfService: PdfService) {}
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService,
+    private pdfService: PdfService
+  ) {}
+
+  // Métodos de permisos
+  canCreate(): boolean {
+    return this.authService.hasPermission('academia', 'gestionar');
+  }
+
+  canEdit(): boolean {
+    return this.authService.hasPermission('academia', 'gestionar');
+  }
+
+  canDelete(): boolean {
+    // Solo admin puede eliminar cursos
+    return this.authService.hasRole(['admin']);
+  }
+
+  canExport(): boolean {
+    return this.authService.hasPermission('reporte', 'exportar');
+  }
+
+  canAssign(): boolean {
+    // Puede asignar docentes si puede gestionar academia
+    return this.authService.hasPermission('academia', 'gestionar');
+  }
 
   ngOnInit() {
     this.loadCursos();
@@ -121,13 +149,15 @@ export class Cursos implements OnInit {
   }
 
   loadAcademias() {
-    // Usamos el endpoint de áreas (academias)
-    this.apiService.getAreasEspecialidad().subscribe({
+    // Usar endpoint de academias (tabla academia, no area_especialidad)
+    this.apiService.getAcademias().subscribe({
       next: (response) => {
         if (response.success) {
-          // Mapear a formato simple
-          this.academias = response.data.map(a => ({ id: a.id, nombre: a.nombre }));
+          this.academias = response.data;
         }
+      },
+      error: (err) => {
+        console.error('Error al cargar academias:', err);
       }
     });
   }
@@ -324,6 +354,9 @@ export class Cursos implements OnInit {
 
   // ========== ASIGNACIÓN DE DOCENTES ==========
   openAsignacion(curso: Curso) {
+    // Recargar lista de docentes para tener los más recientes
+    this.loadDocentes();
+    
     this.asignacionData = {
       docente_id: 0,
       curso_id: curso.id!,

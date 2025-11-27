@@ -2,8 +2,8 @@
   <div class="header">
     <h1>⭐ Evaluación Docente</h1>
     <div class="header-actions">
-      <button class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
-      <button (click)="openForm()" class="btn-primary">+ Nueva Evaluación</button>
+      <button *ngIf="canExport()" class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
+      <button *ngIf="canCreate()" (click)="openForm()" class="btn-primary">+ Nueva Evaluación</button>
     </div>
   </div>
 
@@ -91,8 +91,8 @@
           </td>
           <td class="actions">
             <button (click)="openDetail(eval)" class="btn-view">Ver</button>
-            <button (click)="openForm(eval)" class="btn-edit">Editar</button>
-            <button (click)="deleteEvaluacion(eval.id!)" class="btn-delete">Eliminar</button>
+            <button *ngIf="canEdit()" (click)="openForm(eval)" class="btn-edit">Editar</button>
+            <button *ngIf="canDelete()" (click)="deleteEvaluacion(eval.id!)" class="btn-delete">Eliminar</button>
           </td>
         </tr>
         <tr *ngIf="evaluaciones.length === 0">

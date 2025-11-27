@@ -277,7 +277,8 @@ export class PdfService {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.text(resumen.promedio_global?.toFixed(1) || 'N/A', 40, yPos + 15, { align: 'center' });
+      const promedioGlobal = parseFloat(resumen.promedio_global) || 0;
+      doc.text(promedioGlobal.toFixed(1), 40, yPos + 15, { align: 'center' });
       doc.setFontSize(8);
       doc.text('Promedio Global', 40, yPos + 24, { align: 'center' });
 
@@ -302,8 +303,8 @@ export class PdfService {
         const criteriosData = resumen.promedios_criterios.map((c: any) => [
           c.criterio || '',
           c.categoria || '',
-          c.promedio?.toFixed(1) || '0.0',
-          c.total_respuestas?.toString() || '0'
+          (parseFloat(c.promedio) || 0).toFixed(1),
+          (c.total_respuestas || 0).toString()
         ]);
 
         autoTable(doc, {

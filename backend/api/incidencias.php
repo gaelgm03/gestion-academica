@@ -56,11 +56,15 @@ $historialModel = null;
 if (class_exists('IncidenciaHistorial')) {
     try {
         $stmt = $pdo->query("SHOW TABLES LIKE 'incidencia_historial'");
-        if ($stmt->rowCount() > 0) {
+        $tableExists = $stmt->fetch(); // fetch() funciona mejor que rowCount() para SHOW TABLES
+        if ($tableExists) {
             $historialModel = new IncidenciaHistorial($pdo);
+            error_log("Historial - Modelo inicializado correctamente");
+        } else {
+            error_log("Historial - Tabla 'incidencia_historial' NO existe en la BD");
         }
     } catch (Exception $e) {
-        // La tabla no existe, continuar sin historial
+        error_log("Historial - Error al verificar tabla: " . $e->getMessage());
     }
 }
 
@@ -208,17 +212,33 @@ try {
             if ($updated) {
                 $incidencia = $incidenciaModel->getById($id);
                 
+                // DEBUG: Información para diagnóstico
+                $debugInfo = [
+                    'historial_model_exists' => $historialModel !== null,
+                    'datos_anteriores_keys' => array_keys($datosAnteriores ?: []),
+                    'datos_nuevos_keys' => array_keys($data ?: []),
+                    'cambios_detectados' => [],
+                    'historial_registrado' => false,
+                    'error' => null
+                ];
+                
                 // Registrar cambios en historial (si la tabla existe)
                 if ($historialModel) {
                     try {
                         $cambios = IncidenciaHistorial::detectarCambios($datosAnteriores, $data);
+                        $debugInfo['cambios_detectados'] = $cambios;
+                        
                         if (!empty($cambios)) {
                             $historialModel->registrarEdicion($id, $currentUserId, $cambios);
+                            $debugInfo['historial_registrado'] = true;
                         }
                     } catch (Exception $e) {
-                        error_log("Error al registrar historial de edición: " . $e->getMessage());
+                        $debugInfo['error'] = $e->getMessage();
                     }
                 }
+                
+                // Incluir debug en respuesta temporalmente
+                $incidencia['_debug'] = $debugInfo;
                 
                 jsonResponse(true, 'Incidencia actualizada exitosamente', $incidencia);
             } else {

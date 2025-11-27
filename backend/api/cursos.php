@@ -81,6 +81,12 @@ try {
                 $cursos = $cursoModel->getCursosParaSelector($search);
                 jsonResponse(true, 'Cursos para selector', $cursos);
                 
+            } elseif ($action === 'academias') {
+                // Obtener lista de academias
+                $stmt = $pdo->query("SELECT id, nombre FROM academia ORDER BY nombre ASC");
+                $academias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                jsonResponse(true, 'Lista de academias', $academias);
+                
             } elseif ($action === 'docentes' && $id) {
                 // Obtener docentes de un curso
                 $periodo = $_GET['periodo'] ?? null;
@@ -240,7 +246,10 @@ try {
             break;
     }
     
+} catch (PDOException $e) {
+    error_log("Error PDO en API Cursos: " . $e->getMessage() . " - Code: " . $e->getCode());
+    jsonResponse(false, 'Error de base de datos: ' . $e->getMessage(), null, 500);
 } catch (Exception $e) {
-    error_log("Error en API Cursos: " . $e->getMessage());
+    error_log("Error en API Cursos: " . $e->getMessage() . " - Trace: " . $e->getTraceAsString());
     jsonResponse(false, 'Error interno del servidor: ' . $e->getMessage(), null, 500);
 }

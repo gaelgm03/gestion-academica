@@ -21,7 +21,7 @@
         Incidencias
       </a>
     </li>
-    <li>
+    <li *ngIf="canViewCursos()">
       <a routerLink="/cursos" routerLinkActive="active">
         Cursos
       </a>

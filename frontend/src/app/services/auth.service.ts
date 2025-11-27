@@ -138,23 +138,29 @@ export class AuthService {
     if (user.rol_nombre === 'admin') return true;
     
     // Matriz de permisos por rol (sincronizada con BD rol_permiso)
+    // Admin tiene todos los permisos (manejado arriba)
     const permisosRol: { [rol: string]: { [scope: string]: string[] } } = {
       'academia': {
-        'docente': ['ver'],
+        // Presidente de Academia - gestiona docentes y su academia
+        'docente': ['crear', 'editar', 'ver'],
         'incidencia': ['registrar', 'actualizar', 'ver'],
         'reporte': ['exportar', 'ver'],
         'academia': ['gestionar']
       },
       'direccion': {
+        // Supervisión ejecutiva - solo lectura + puede registrar incidencias
         'docente': ['ver'],
-        'incidencia': ['ver'],
+        'incidencia': ['registrar', 'ver'],
         'reporte': ['exportar', 'ver']
       },
       'docente': {
-        'docente': ['ver'],
-        'incidencia': ['registrar', 'ver']
+        // Usuario básico - ve info, edita su perfil, registra tickets
+        'docente': ['editar', 'ver'],
+        'incidencia': ['registrar', 'ver'],
+        'reporte': ['ver']
       },
       'coordinador': {
+        // Coordina programas - gestiona docentes e incidencias
         'docente': ['crear', 'editar', 'ver'],
         'incidencia': ['registrar', 'actualizar', 'ver'],
         'reporte': ['exportar', 'ver'],

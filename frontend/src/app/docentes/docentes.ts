@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Docente, AreaEspecialidad, ResumenEvaluacionDocente } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 import { PdfService } from '../services/pdf.service';
 
 @Component({
@@ -49,7 +50,63 @@ export class Docentes implements OnInit {
     search: ''
   };
 
-  constructor(private apiService: ApiService, private pdfService: PdfService) {}
+  constructor(
+    private apiService: ApiService, 
+    private authService: AuthService,
+    private pdfService: PdfService
+  ) {}
+
+  // Métodos de permisos para la vista
+  canCreate(): boolean {
+    return this.authService.hasPermission('docente', 'crear');
+  }
+
+  canEdit(): boolean {
+    return this.authService.hasPermission('docente', 'editar');
+  }
+
+  // Verifica si puede editar un docente específico
+  // El rol "docente" solo puede editar su propio perfil
+  canEditDocente(docente: Docente): boolean {
+    const user = this.authService.currentUserValue;
+    if (!user) return false;
+    
+    // Si tiene permiso general de editar (admin, academia, coordinador)
+    if (this.authService.hasPermission('docente', 'editar')) {
+      // Si es rol "docente", solo puede editar su propio perfil
+      if (user.rol_nombre === 'docente') {
+        // Comparación flexible por si hay diferencia de tipos (string vs number)
+        // También comparamos por email como respaldo
+        const sameId = user.docente_id != null && docente.id != null && 
+                       Number(user.docente_id) === Number(docente.id);
+        const sameEmail = user.email?.toLowerCase() === docente.email?.toLowerCase();
+        
+        // DEBUG: Descomentar para diagnosticar
+        console.log('canEditDocente DEBUG:', {
+          userDocenteId: user.docente_id,
+          docenteId: docente.id,
+          userEmail: user.email,
+          docenteEmail: docente.email,
+          sameId,
+          sameEmail,
+          result: sameId || sameEmail
+        });
+        
+        return sameId || sameEmail;
+      }
+      // Otros roles pueden editar cualquier docente
+      return true;
+    }
+    return false;
+  }
+
+  canDelete(): boolean {
+    return this.authService.hasPermission('docente', 'eliminar');
+  }
+
+  canExport(): boolean {
+    return this.authService.hasPermission('reporte', 'exportar');
+  }
 
   ngOnInit() {
     this.loadDocentes();
@@ -373,12 +430,25 @@ export class Docentes implements OnInit {
   }
 
   exportarEvaluacionPdf() {
-    if (this.selectedDocente && this.docenteEvaluaciones) {
+    if (!this.selectedDocente) {
+      alert('No hay docente seleccionado');
+      return;
+    }
+    
+    if (!this.docenteEvaluaciones || this.docenteEvaluaciones.total_evaluaciones === 0) {
+      alert('No hay evaluaciones para exportar');
+      return;
+    }
+    
+    try {
       this.pdfService.exportarEvaluacionDocente(
         this.selectedDocente, 
         this.docenteEvaluaciones, 
         []
       );
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+      alert('Error al generar el PDF. Revisa la consola para más detalles.');
     }
   }
 }

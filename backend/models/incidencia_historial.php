@@ -187,12 +187,17 @@ class IncidenciaHistorial {
         $camposAComparar = ['tipo_id', 'profesor', 'curso', 'prioridad', 'sla', 'asignadoA', 'status', 'evidencias'];
         
         foreach ($camposAComparar as $campo) {
+            // Solo comparar si el campo fue enviado en los datos nuevos
+            if (!array_key_exists($campo, $nuevo)) {
+                continue;
+            }
+            
             $valorAnterior = $anterior[$campo] ?? null;
             $valorNuevo = $nuevo[$campo] ?? null;
             
-            // Convertir a string para comparación
-            $strAnterior = is_null($valorAnterior) ? '' : (string)$valorAnterior;
-            $strNuevo = is_null($valorNuevo) ? '' : (string)$valorNuevo;
+            // Convertir a string para comparación (manejar nulls y vacíos como equivalentes)
+            $strAnterior = is_null($valorAnterior) || $valorAnterior === '' ? '' : (string)$valorAnterior;
+            $strNuevo = is_null($valorNuevo) || $valorNuevo === '' ? '' : (string)$valorNuevo;
             
             if ($strAnterior !== $strNuevo) {
                 $cambios[$campo] = [

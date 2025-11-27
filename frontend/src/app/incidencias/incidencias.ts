@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Incidencia, Docente, TipoIncidencia, UploadedFile, HistorialItem, Curso } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 import { PdfService } from '../services/pdf.service';
 
 @Component({
@@ -55,7 +56,28 @@ export class Incidencias implements OnInit {
     tipo_id: ''
   };
 
-  constructor(private apiService: ApiService, private pdfService: PdfService) {}
+  constructor(
+    private apiService: ApiService, 
+    private authService: AuthService,
+    private pdfService: PdfService
+  ) {}
+
+  // Métodos de permisos para la vista
+  canCreate(): boolean {
+    return this.authService.hasPermission('incidencia', 'registrar');
+  }
+
+  canEdit(): boolean {
+    return this.authService.hasPermission('incidencia', 'actualizar');
+  }
+
+  canDelete(): boolean {
+    return this.authService.hasPermission('incidencia', 'eliminar');
+  }
+
+  canExport(): boolean {
+    return this.authService.hasPermission('reporte', 'exportar');
+  }
 
   ngOnInit() {
     this.loadIncidencias();
@@ -381,14 +403,34 @@ export class Incidencias implements OnInit {
   loadFiles(incidenciaId: number) {
     this.apiService.getIncidenciaFiles(incidenciaId).subscribe({
       next: (response) => {
-        if (response.success) {
+        if (response.success && response.data.files.length > 0) {
           this.uploadedFiles = response.data.files;
+        } else {
+          // Fallback: usar campo evidencias de la incidencia
+          this.loadFilesFromEvidencias();
         }
       },
       error: (err) => {
         console.error('Error al cargar archivos:', err);
+        // Fallback en caso de error
+        this.loadFilesFromEvidencias();
       }
     });
+  }
+
+  loadFilesFromEvidencias() {
+    // Cargar archivos desde el campo evidencias del formData
+    if (this.formData.evidencias && typeof this.formData.evidencias === 'string') {
+      const fileNames = this.formData.evidencias.split(',').filter(f => f.trim());
+      this.uploadedFiles = fileNames.map(filename => ({
+        filename: filename.trim(),
+        path: `uploads/${filename.trim()}`,
+        size: 0,
+        modified: ''
+      }));
+    } else {
+      this.uploadedFiles = [];
+    }
   }
 
   deleteFile(file: UploadedFile) {

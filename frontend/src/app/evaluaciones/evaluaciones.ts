@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, EvaluacionDocente, CriterioEvaluacion, PeriodoEvaluacion, Docente, Curso, EvaluacionDetalle, EvaluacionStats } from '../services/api.service';
+import { AuthService } from '../services/auth.service';
 import { PdfService } from '../services/pdf.service';
 
 @Component({
@@ -47,7 +48,31 @@ export class Evaluaciones implements OnInit {
     periodo_id: ''
   };
 
-  constructor(private apiService: ApiService, private pdfService: PdfService) {}
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService,
+    private pdfService: PdfService
+  ) {}
+
+  // Métodos de permisos
+  canCreate(): boolean {
+    // Todos los roles autenticados pueden crear evaluaciones
+    return this.authService.isAuthenticated();
+  }
+
+  canEdit(): boolean {
+    // Admin, academia y coordinador pueden editar evaluaciones
+    return this.authService.hasRole(['admin', 'academia', 'coordinador']);
+  }
+
+  canDelete(): boolean {
+    // Solo admin puede eliminar evaluaciones
+    return this.authService.hasRole(['admin']);
+  }
+
+  canExport(): boolean {
+    return this.authService.hasPermission('reporte', 'exportar');
+  }
 
   ngOnInit() {
     this.loadEvaluaciones();
@@ -139,6 +164,9 @@ export class Evaluaciones implements OnInit {
   }
 
   openForm(evaluacion?: EvaluacionDocente) {
+    // Recargar lista de docentes para tener los más recientes
+    this.loadDocentes();
+    
     if (evaluacion) {
       this.editingEvaluacion = evaluacion;
       this.formData = { ...evaluacion };

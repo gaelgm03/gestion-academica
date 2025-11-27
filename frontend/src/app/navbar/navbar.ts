@@ -18,6 +18,11 @@ export class Navbar implements OnInit {
     private router: Router
   ) {}
 
+  // Verificar si el usuario puede ver Cursos (solo admin, academia, coordinador)
+  canViewCursos(): boolean {
+    return this.authService.hasRole(['admin', 'academia', 'coordinador']);
+  }
+
   ngOnInit() {
     this.authService.currentUser.subscribe(user => {
       this.currentUser = user;

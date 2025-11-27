@@ -69,11 +69,33 @@ CREATE TABLE rol_permiso (
     UNIQUE KEY unique_rol_permiso (rol_id, permiso_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================
+-- ASIGNACIÓN DE PERMISOS POR ROL
+-- ============================================================
+-- Permisos disponibles:
+--   1=docente:crear, 2=docente:editar, 3=docente:eliminar, 4=docente:ver
+--   5=incidencia:registrar, 6=incidencia:actualizar, 7=incidencia:eliminar, 8=incidencia:ver
+--   9=reporte:exportar, 10=reporte:ver, 11=academia:gestionar, 12=usuario:gestionar, 13=rol:asignar
+-- ============================================================
+
 INSERT INTO rol_permiso (rol_id, permiso_id) VALUES
+-- ROL 1: ADMIN - Control total del sistema
 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10), (1, 11), (1, 12), (1, 13),
-(2, 4), (2, 5), (2, 6), (2, 8), (2, 9), (2, 10), (2, 11),
-(3, 4), (3, 8), (3, 9), (3, 10),
-(4, 4), (4, 5), (4, 8),
+
+-- ROL 2: ACADEMIA (Presidente de Academia) - Gestiona docentes y su academia
+-- docente: crear, editar, ver | incidencia: registrar, actualizar, ver | reporte: exportar, ver | academia: gestionar
+(2, 1), (2, 2), (2, 4), (2, 5), (2, 6), (2, 8), (2, 9), (2, 10), (2, 11),
+
+-- ROL 3: DIRECCIÓN - Supervisión ejecutiva, puede ver todo y registrar incidencias si es necesario
+-- docente: ver | incidencia: registrar, ver | reporte: exportar, ver
+(3, 4), (3, 5), (3, 8), (3, 9), (3, 10),
+
+-- ROL 4: DOCENTE - Usuario básico, ve información y gestiona sus propias incidencias
+-- docente: editar (su propio perfil, validado en código), ver | incidencia: registrar, ver | reporte: ver (sus propios)
+(4, 2), (4, 4), (4, 5), (4, 8), (4, 10),
+
+-- ROL 5: COORDINADOR - Coordina programas, gestiona docentes e incidencias
+-- docente: crear, editar, ver | incidencia: registrar, actualizar, ver | reporte: exportar, ver | academia: gestionar
 (5, 1), (5, 2), (5, 4), (5, 5), (5, 6), (5, 8), (5, 9), (5, 10), (5, 11);
 
 -- 5. DOCENTE
@@ -290,19 +312,19 @@ CREATE TABLE incidencia (
     FOREIGN KEY (curso_id) REFERENCES curso(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO incidencia (tipo_id, profesor, curso, prioridad, sla, asignadoA, status) VALUES
-(2, 1, 'Cálculo Integral', 'Alta', '48h', 2, 'abierto'),
-(3, 2, 'Bases de Datos', 'Media', '72h', 1, 'en proceso'),
-(5, 3, 'Psicología General', 'Alta', '24h', 3, 'cerrado'),
-(1, 4, 'Comunicación Oral', 'Media', '48h', 2, 'abierto'),
-(4, 5, 'Microeconomía', 'Baja', '72h', 1, 'en proceso'),
-(1, 6, 'Historia del Arte', 'Alta', '24h', 3, 'cerrado'),
-(1, 7, 'Programación Avanzada', 'Baja', '96h', 2, 'abierto'),
-(2, 8, 'Álgebra Lineal', 'Media', '48h', 9, 'en proceso'),
-(1, 1, 'Cálculo Diferencial', 'Baja', '120h', 2, 'abierto'),
-(1, 2, 'Estructuras de Datos', 'Alta', '24h', 1, 'cerrado'),
-(4, 4, 'Redacción Periodística', 'Alta', '12h', 1, 'en proceso'),
-(2, 7, 'Circuitos Eléctricos', 'Media', '96h', 2, 'abierto');
+INSERT INTO incidencia (tipo_id, profesor, curso, curso_id, prioridad, sla, asignadoA, status) VALUES
+(2, 1, 'Introducción a la Programación', 1, 'Alta', '48h', 2, 'abierto'),
+(3, 2, 'Base de Datos', 3, 'Media', '72h', 1, 'en proceso'),
+(5, 3, 'Introducción al Derecho', 6, 'Alta', '24h', 3, 'cerrado'),
+(1, 4, 'Teoría de la Comunicación', 10, 'Media', '48h', 2, 'abierto'),
+(4, 5, 'Contabilidad Financiera', 8, 'Baja', '72h', 1, 'en proceso'),
+(1, 6, 'Mercadotecnia', 9, 'Alta', '24h', 3, 'cerrado'),
+(1, 7, 'Inteligencia Artificial', 5, 'Baja', '96h', 2, 'abierto'),
+(2, 8, 'Estructuras de Datos', 2, 'Media', '48h', 9, 'en proceso'),
+(1, 1, 'Ingeniería de Software', 4, 'Baja', '120h', 2, 'abierto'),
+(1, 2, 'Estructuras de Datos', 2, 'Alta', '24h', 1, 'cerrado'),
+(4, 4, 'Teoría de la Comunicación', 10, 'Alta', '12h', 1, 'en proceso'),
+(2, 7, 'Fundamentos de Administración', 7, 'Media', '96h', 2, 'abierto');
 
 -- 15. INCIDENCIA_HISTORIAL
 CREATE TABLE incidencia_historial (
@@ -315,6 +337,7 @@ CREATE TABLE incidencia_historial (
     accion ENUM('crear', 'editar', 'eliminar', 'cambio_status', 'asignar') DEFAULT 'editar',
     fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ip_address VARCHAR(45),
+    user_agent VARCHAR(255),
     FOREIGN KEY (incidencia_id) REFERENCES incidencia(id) ON DELETE CASCADE,
     FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE RESTRICT,
     INDEX idx_incidencia (incidencia_id),

@@ -166,10 +166,31 @@ class Reporte {
         $fechas = $this->getPeriodoFechas($periodo, $fechaInicio, $fechaFin);
         $dashboard['periodo'] = $fechas;
         
-        // 1. Estadísticas generales (docentes no se filtran por fecha)
-        $sql = "SELECT * FROM vista_dashboard";
-        $stmt = $this->pdo->query($sql);
-        $dashboard['dashboard'] = $stmt->fetch(PDO::FETCH_ASSOC);
+        // 1. Estadísticas de docentes (no se filtran por fecha)
+        $sqlDocentes = "
+            SELECT 
+                COUNT(*) AS total_docentes,
+                SUM(CASE WHEN sni = 1 THEN 1 ELSE 0 END) AS docentes_sni,
+                SUM(CASE WHEN estatus = 'activo' THEN 1 ELSE 0 END) AS docentes_activos
+            FROM docente
+        ";
+        $stmt = $this->pdo->query($sqlDocentes);
+        $docentesStats = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // 2. Estadísticas de incidencias (filtradas por período para coherencia)
+        $sqlIncidencias = "
+            SELECT 
+                COUNT(*) AS total_incidencias,
+                SUM(CASE WHEN status = 'abierto' THEN 1 ELSE 0 END) AS incidencias_abiertas
+            FROM incidencia
+            WHERE DATE(fecha_creacion) BETWEEN :inicio AND :fin
+        ";
+        $stmt = $this->pdo->prepare($sqlIncidencias);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
+        $incidenciasStats = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Combinar estadísticas
+        $dashboard['dashboard'] = array_merge($docentesStats, $incidenciasStats);
         
         // 2. Incidencias por estado (filtrado por período)
         $sql = "
@@ -450,18 +471,34 @@ class Reporte {
     public function getReportePorMateria($periodo = 'todo', $fechaInicio = null, $fechaFin = null) {
         $fechas = $this->getPeriodoFechas($periodo, $fechaInicio, $fechaFin);
         
-        // 1. Estadísticas generales de cursos
+        // 1. Estadísticas generales de cursos (solo activos para coherencia con distribuciones)
         $sqlResumen = "
             SELECT 
                 COUNT(*) as total_cursos,
-                SUM(CASE WHEN estatus = 'activo' THEN 1 ELSE 0 END) as cursos_activos,
-                SUM(CASE WHEN estatus = 'inactivo' THEN 1 ELSE 0 END) as cursos_inactivos
+                COUNT(*) as cursos_activos,
+                0 as cursos_inactivos
             FROM curso
+            WHERE estatus = 'activo'
         ";
         $stmt = $this->pdo->query($sqlResumen);
         $resumen = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // 2. Cursos con más incidencias
+        // Obtener inactivos por separado
+        $stmt = $this->pdo->query("SELECT COUNT(*) as cnt FROM curso WHERE estatus = 'inactivo'");
+        $resumen['cursos_inactivos'] = $stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
+        $resumen['total_cursos'] = $resumen['cursos_activos'] + $resumen['cursos_inactivos'];
+        
+        // Total de incidencias en el período
+        $sqlIncidenciasPeriodo = "
+            SELECT COUNT(*) as total
+            FROM incidencia
+            WHERE DATE(fecha_creacion) BETWEEN :inicio AND :fin
+        ";
+        $stmt = $this->pdo->prepare($sqlIncidenciasPeriodo);
+        $stmt->execute([':inicio' => $fechas['inicio'], ':fin' => $fechas['fin']]);
+        $resumen['total_incidencias_periodo'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        // 2. Cursos con más incidencias (mejora matching por nombre con LIKE)
         $sqlIncidencias = "
             SELECT 
                 c.id,
@@ -470,17 +507,20 @@ class Reporte {
                 a.nombre as academia,
                 c.semestre,
                 c.modalidad,
-                COUNT(i.id) as total_incidencias,
-                SUM(CASE WHEN i.status = 'abierto' THEN 1 ELSE 0 END) as incidencias_abiertas,
-                SUM(CASE WHEN i.status = 'en proceso' THEN 1 ELSE 0 END) as incidencias_en_proceso,
-                SUM(CASE WHEN i.status = 'cerrado' THEN 1 ELSE 0 END) as incidencias_cerradas,
-                SUM(CASE WHEN i.prioridad = 'Alta' THEN 1 ELSE 0 END) as prioridad_alta,
-                SUM(CASE WHEN i.prioridad = 'Media' THEN 1 ELSE 0 END) as prioridad_media,
-                SUM(CASE WHEN i.prioridad = 'Baja' THEN 1 ELSE 0 END) as prioridad_baja
+                COALESCE(COUNT(i.id), 0) as total_incidencias,
+                COALESCE(SUM(CASE WHEN i.status = 'abierto' THEN 1 ELSE 0 END), 0) as incidencias_abiertas,
+                COALESCE(SUM(CASE WHEN i.status = 'en proceso' THEN 1 ELSE 0 END), 0) as incidencias_en_proceso,
+                COALESCE(SUM(CASE WHEN i.status = 'cerrado' THEN 1 ELSE 0 END), 0) as incidencias_cerradas,
+                COALESCE(SUM(CASE WHEN i.prioridad = 'Alta' THEN 1 ELSE 0 END), 0) as prioridad_alta,
+                COALESCE(SUM(CASE WHEN i.prioridad = 'Media' THEN 1 ELSE 0 END), 0) as prioridad_media,
+                COALESCE(SUM(CASE WHEN i.prioridad = 'Baja' THEN 1 ELSE 0 END), 0) as prioridad_baja
             FROM curso c
             LEFT JOIN academia a ON c.academia_id = a.id
-            LEFT JOIN incidencia i ON (c.id = i.curso_id OR c.nombre = i.curso)
-                AND DATE(i.fecha_creacion) BETWEEN :inicio AND :fin
+            LEFT JOIN incidencia i ON (
+                c.id = i.curso_id 
+                OR i.curso LIKE CONCAT('%', c.nombre, '%')
+                OR c.nombre LIKE CONCAT('%', i.curso, '%')
+            ) AND DATE(i.fecha_creacion) BETWEEN :inicio AND :fin
             WHERE c.estatus = 'activo'
             GROUP BY c.id, c.codigo, c.nombre, a.nombre, c.semestre, c.modalidad
             ORDER BY total_incidencias DESC
@@ -553,7 +593,7 @@ class Reporte {
         $stmt = $this->pdo->query($sqlSemestre);
         $porSemestre = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // 7. Top materias por evaluación docente
+        // 7. Top materias por evaluación docente (solo cursos activos)
         $sqlTopEvaluaciones = "
             SELECT 
                 c.codigo,
@@ -564,7 +604,7 @@ class Reporte {
                 MAX(ed.calificacion_global) as calificacion_max
             FROM curso c
             INNER JOIN evaluacion_docente ed ON c.id = ed.curso_id
-            WHERE ed.estatus = 'completada'
+            WHERE ed.estatus = 'completada' AND c.estatus = 'activo'
             GROUP BY c.id, c.codigo, c.nombre
             HAVING total_evaluaciones >= 1
             ORDER BY promedio DESC
@@ -605,15 +645,18 @@ class Reporte {
                 c.modalidad,
                 c.creditos,
                 c.horas_semana,
-                COUNT(DISTINCT dc.docente_id) as docentes_asignados,
-                COUNT(DISTINCT i.id) as total_incidencias,
-                SUM(CASE WHEN i.status = 'abierto' THEN 1 ELSE 0 END) as incidencias_abiertas,
+                COALESCE(COUNT(DISTINCT dc.docente_id), 0) as docentes_asignados,
+                COALESCE(COUNT(DISTINCT i.id), 0) as total_incidencias,
+                COALESCE(SUM(CASE WHEN i.status = 'abierto' THEN 1 ELSE 0 END), 0) as incidencias_abiertas,
                 ROUND(AVG(ed.calificacion_global), 2) as promedio_evaluacion
             FROM curso c
             LEFT JOIN academia a ON c.academia_id = a.id
-            LEFT JOIN docente_curso dc ON c.id = dc.curso_id
-            LEFT JOIN incidencia i ON (c.id = i.curso_id OR c.nombre = i.curso)
-                AND DATE(i.fecha_creacion) BETWEEN :inicio AND :fin
+            LEFT JOIN docente_curso dc ON c.id = dc.curso_id AND dc.estatus = 'activo'
+            LEFT JOIN incidencia i ON (
+                c.id = i.curso_id 
+                OR i.curso LIKE CONCAT('%', c.nombre, '%')
+                OR c.nombre LIKE CONCAT('%', i.curso, '%')
+            ) AND DATE(i.fecha_creacion) BETWEEN :inicio AND :fin
             LEFT JOIN evaluacion_docente ed ON c.id = ed.curso_id AND ed.estatus = 'completada'
             WHERE c.estatus = 'activo'
             GROUP BY c.id, c.codigo, c.nombre, a.nombre, c.semestre, c.modalidad, c.creditos, c.horas_semana

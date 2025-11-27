@@ -2,8 +2,8 @@
   <div class="header">
     <h1>Gestión de Incidencias</h1>
     <div class="header-actions">
-      <button class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
-      <button class="btn-primary" (click)="openForm()">+ Nueva Incidencia</button>
+      <button *ngIf="canExport()" class="btn-pdf" (click)="exportarPdf()" title="Exportar a PDF">📄 Exportar PDF</button>
+      <button *ngIf="canCreate()" class="btn-primary" (click)="openForm()">+ Nueva Incidencia</button>
     </div>
   </div>
 
@@ -94,8 +94,8 @@
           <td>{{ incidencia.fecha_creacion ? formatDate(incidencia.fecha_creacion) : 'N/A' }}</td>
           <td class="actions">
             <button (click)="openDetail(incidencia)" class="btn-view">Ver</button>
-            <button (click)="openForm(incidencia)" class="btn-edit">Editar</button>
-            <button (click)="deleteIncidencia(incidencia.id!)" class="btn-delete">Eliminar</button>
+            <button *ngIf="canEdit()" (click)="openForm(incidencia)" class="btn-edit">Editar</button>
+            <button *ngIf="canDelete()" (click)="deleteIncidencia(incidencia.id!)" class="btn-delete">Eliminar</button>
           </td>
         </tr>
         <tr *ngIf="incidencias.length === 0">
@@ -211,7 +211,7 @@
       </div>
 
       <div class="detail-actions">
-        <button (click)="editFromDetail()" class="btn-primary">✏️ Editar Incidencia</button>
+        <button *ngIf="canEdit()" (click)="editFromDetail()" class="btn-primary">✏️ Editar Incidencia</button>
         <button (click)="closeDetail()" class="btn-secondary">Cerrar</button>
       </div>
     </div>
