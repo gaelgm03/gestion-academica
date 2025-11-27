@@ -6,10 +6,12 @@ import { Evaluaciones } from './evaluaciones/evaluaciones';
 import { ReporteMaterias } from './reporte-materias/reporte-materias';
 import { Dashboard } from './dashboard/dashboard';
 import { Login } from './login/login';
+import { Unauthorized } from './unauthorized/unauthorized';
 import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
+  { path: 'unauthorized', component: Unauthorized },
   { 
     path: 'dashboard', 
     component: Dashboard, 

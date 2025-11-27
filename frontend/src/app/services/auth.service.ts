@@ -135,6 +135,48 @@ export class AuthService {
     if (!user) return false;
     
     // Los administradores tienen todos los permisos
-    return user.rol_nombre === 'admin';
+    if (user.rol_nombre === 'admin') return true;
+    
+    // Matriz de permisos por rol (sincronizada con BD rol_permiso)
+    const permisosRol: { [rol: string]: { [scope: string]: string[] } } = {
+      'academia': {
+        'docente': ['ver'],
+        'incidencia': ['registrar', 'actualizar', 'ver'],
+        'reporte': ['exportar', 'ver'],
+        'academia': ['gestionar']
+      },
+      'direccion': {
+        'docente': ['ver'],
+        'incidencia': ['ver'],
+        'reporte': ['exportar', 'ver']
+      },
+      'docente': {
+        'docente': ['ver'],
+        'incidencia': ['registrar', 'ver']
+      },
+      'coordinador': {
+        'docente': ['crear', 'editar', 'ver'],
+        'incidencia': ['registrar', 'actualizar', 'ver'],
+        'reporte': ['exportar', 'ver'],
+        'academia': ['gestionar']
+      }
+    };
+    
+    const permisos = permisosRol[user.rol_nombre];
+    if (!permisos) return false;
+    
+    const scopePermisos = permisos[scope];
+    if (!scopePermisos) return false;
+    
+    return scopePermisos.includes(action);
+  }
+
+  /**
+   * Verifica si el usuario tiene al menos uno de los roles especificados
+   */
+  hasAnyRole(roles: string[]): boolean {
+    const user = this.currentUserValue;
+    if (!user) return false;
+    return roles.includes(user.rol_nombre);
   }
 }
